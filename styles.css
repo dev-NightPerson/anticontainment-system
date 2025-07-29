@@ -72,28 +72,7 @@ html, body {
 .iframe-container {
     width: 100%;
     height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* Custom scrollbar styling for the container */
-    scrollbar-width: thin;
-    scrollbar-color: #333 #000;
-}
-
-.iframe-container::-webkit-scrollbar {
-    width: 12px;
-}
-
-.iframe-container::-webkit-scrollbar-track {
-    background: #000;
-}
-
-.iframe-container::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 6px;
-}
-
-.iframe-container::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    overflow: hidden;
 }
 
 .banner-iframe {
