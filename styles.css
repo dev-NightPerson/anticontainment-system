@@ -28,7 +28,7 @@ html, body {
 
 /* Header Section */
 .header-section {
-    background: #000;
+    background: #010101;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,7 +106,7 @@ html, body {
 
 /* Footer Section */
 .footer-section {
-    background: #0f0f0f;
+    background: #010101;
     color: white;
     display: flex;
     align-items: center;
@@ -278,6 +278,8 @@ html, body {
     position: absolute;
     border-radius: 2px;
     animation: fadeOutAndDrift 0.5s linear forwards;
+    will-change: transform, opacity; /* Force hardware acceleration */
+    backface-visibility: hidden; /* Improve performance */
 }
 
 @keyframes fadeOutAndDrift {
