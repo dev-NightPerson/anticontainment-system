@@ -22,6 +22,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Collabs button logic
+    const collabsBtn = document.getElementById('collabs-btn');
+    if (collabsBtn) {
+        collabsBtn.addEventListener('click', () => {
+            window.open('https://anticontainmentsystem.fun', '_blank');
+        });
+    }
+
     // Add smooth scroll behavior
     document.documentElement.style.scrollBehavior = 'smooth';
     
