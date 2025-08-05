@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const collabsBtn = document.getElementById('collabs-btn');
     if (collabsBtn) {
         collabsBtn.addEventListener('click', () => {
-            window.open('https://anticontainmentsystem.fun', '_blank');
+            window.location.href = 'collabs.html';
         });
     }
 

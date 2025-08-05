@@ -384,13 +384,13 @@ html, body {
 
 /* Updates and Collabs Buttons */
 #updates-btn, #collabs-btn {
-    padding: 10px 20px;
+    padding: 6px 12px;
     background: #010101;
     color: #cd7f32;
     border: 2px solid #cd7f32;
     border-radius: 4px;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.8rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -562,6 +562,20 @@ html, body {
     min-height: 150px;
 }
 
+.wallet-info {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+}
+
+.wallet-text {
+    color: #cd7f32;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+}
+
 .footer-link {
     display: block;
     color: #f5f5dc;
@@ -647,8 +661,8 @@ html, body {
     }
 
     #updates-btn, #collabs-btn {
-        padding: 8px 16px;
-        font-size: 0.9rem;
+        padding: 5px 10px;
+        font-size: 0.7rem;
     }
     
     .modal-content {
