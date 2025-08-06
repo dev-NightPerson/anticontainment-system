@@ -71,8 +71,8 @@
 
 .card {
     position: absolute;
-    width: 250px;
-    height: 350px;
+    width: 200px;
+    height: 260px;
     transform-style: preserve-3d;
     cursor: pointer;
     transition: transform 0.6s ease;
@@ -121,10 +121,10 @@
 .card-content {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.6) 0%, rgba(42, 42, 42, 0.6) 50%, rgba(26, 26, 26, 0.6) 100%);
     border: 2px solid #cd7f32;
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -136,6 +136,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
 
 .card-content::before {
@@ -168,7 +169,7 @@
 }
 
 .card-content:hover {
-    background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 50%, #2a2a2a 100%);
+    background: linear-gradient(135deg, rgba(42, 42, 42, 0.7) 0%, rgba(58, 58, 58, 0.7) 50%, rgba(42, 42, 42, 0.7) 100%);
     transform: translateY(-2px);
     box-shadow: 
         0 15px 40px rgba(0, 0, 0, 0.7),
@@ -177,12 +178,12 @@
 }
 
 .card-image {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid #cd7f32;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .card-image img {
@@ -193,17 +194,17 @@
 
 .card h3 {
     color: #cd7f32;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
+    font-size: 1rem;
+    margin-bottom: 8px;
     text-align: center;
     font-weight: bold;
 }
 
 .card p {
     color: #f5f5dc;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     line-height: 1.4;
 }
 
@@ -211,9 +212,9 @@
     color: #cd7f32;
     text-decoration: none;
     border: 1px solid #cd7f32;
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 4px;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: bold;
     transition: all 0.3s ease;
     text-align: center;
@@ -498,8 +499,8 @@
     .cube-face.bottom { transform: rotateX(-90deg) translateZ(30px); }
     
     .card {
-        width: 200px;
-        height: 280px;
+        width: 180px;
+        height: 230px;
     }
     
     .card[data-angle="0"] {
@@ -531,23 +532,23 @@
     }
     
     .card-content {
-        padding: 15px;
+        padding: 12px;
     }
     
     .card-image {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 10px;
-    }
-    
-    .card h3 {
-        font-size: 1rem;
+        width: 50px;
+        height: 50px;
         margin-bottom: 8px;
     }
     
+    .card h3 {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+    }
+    
     .card p {
-        font-size: 0.8rem;
-        margin-bottom: 15px;
+        font-size: 0.7rem;
+        margin-bottom: 12px;
     }
     
     .collaborators-title {
@@ -588,8 +589,8 @@
     }
     
     .card {
-        width: 160px;
-        height: 240px;
+        width: 140px;
+        height: 180px;
     }
     
     .card[data-angle="0"] {
