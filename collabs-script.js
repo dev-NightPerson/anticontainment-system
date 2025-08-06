@@ -34,6 +34,199 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- Start of Carousel and Cube Interaction Logic ---
+
+    const scene = document.querySelector('.scene');
+    const carousel = document.querySelector('.carousel');
+    const cube = document.querySelector('.cube');
+
+    if (scene && carousel && cube) {
+        let carouselYAngle = 0;
+        let cubeXAngle = 0;
+        let cubeYAngle = 0;
+
+        let isCarouselDragging = false;
+        let isCubeDragging = false;
+        let startX, startY;
+        let lastX, lastY;
+        let carouselStartAngle;
+        let cubeStartAngleX, cubeStartAngleY;
+
+        let carouselAnimationId;
+        let cubeAnimationId;
+        
+        const carouselSpeed = 0.05; // degrees per frame
+        const cubeSpeedX = 0.1;
+        const cubeSpeedY = 0.12;
+
+        // --- Animation Loops ---
+        const animateCarousel = () => {
+            if (!isCarouselDragging) {
+                carouselYAngle = (carouselYAngle + carouselSpeed) % 360;
+                carousel.style.transform = `translate(-50%, -50%) rotateY(${carouselYAngle}deg)`;
+            }
+            carouselAnimationId = requestAnimationFrame(animateCarousel);
+        };
+
+        const animateCube = () => {
+            if (!isCubeDragging) {
+                cubeYAngle = (cubeYAngle + cubeSpeedY) % 360;
+                cubeXAngle = (cubeXAngle + cubeSpeedX) % 360;
+                cube.style.transform = `rotateX(${cubeXAngle}deg) rotateY(${cubeYAngle}deg)`;
+            }
+            cubeAnimationId = requestAnimationFrame(animateCube);
+        };
+        
+        // --- Event Handlers ---
+        const onDragStart = (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.cube-container') || e.target.closest('.cube');
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+            if (target) {
+                isCubeDragging = true;
+                cubeStartAngleX = cubeXAngle;
+                cubeStartAngleY = cubeYAngle;
+            } else {
+                isCarouselDragging = true;
+                carouselStartAngle = carouselYAngle;
+            }
+            
+            startX = clientX;
+            startY = clientY;
+            lastX = clientX;
+            lastY = clientY;
+            scene.style.cursor = 'grabbing';
+        };
+
+        const onDragMove = (e) => {
+            if (!isCarouselDragging && !isCubeDragging) return;
+            
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
+
+            if (isCarouselDragging) {
+                const rotationSensitivity = 0.25;
+                carouselYAngle = carouselStartAngle + dx * rotationSensitivity;
+                carousel.style.transform = `translate(-50%, -50%) rotateY(${carouselYAngle}deg)`;
+            }
+
+            if (isCubeDragging) {
+                const rotationSensitivity = 0.5;
+                cubeYAngle = cubeStartAngleY + dx * rotationSensitivity;
+                cubeXAngle = cubeStartAngleX - dy * rotationSensitivity; // Invert Y for natural feel
+                cube.style.transform = `rotateX(${cubeXAngle}deg) rotateY(${cubeYAngle}deg)`;
+            }
+
+            lastX = clientX;
+            lastY = clientY;
+        };
+
+        const onDragEnd = () => {
+            isCarouselDragging = false;
+            isCubeDragging = false;
+            scene.style.cursor = 'grab';
+        };
+
+        // --- Add Event Listeners ---
+        scene.addEventListener('mousedown', onDragStart);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+        document.addEventListener('mouseleave', onDragEnd); // Handle mouse leaving the window
+
+        scene.addEventListener('touchstart', onDragStart, { passive: false });
+        document.addEventListener('touchmove', onDragMove, { passive: false });
+        document.addEventListener('touchend', onDragEnd);
+        document.addEventListener('touchcancel', onDragEnd);
+
+        // Start animations
+        cancelAnimationFrame(carouselAnimationId);
+        cancelAnimationFrame(cubeAnimationId);
+        animateCarousel();
+        animateCube();
+        scene.style.cursor = 'grab';
+    }
+
+    // --- End of Carousel and Cube Interaction Logic ---
+
+    // Contact on X link functionality
+    const contactXLink = document.getElementById('contact-x-link');
+    if (contactXLink) {
+        contactXLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.open('https://x.com/NinetentwoNTT', 'popup', 'width=600,height=400,scrollbars=yes,resizable=yes');
+        });
+    }
+
+    // More collaborations modal functionality
+    const moreCollabsLink = document.getElementById('more-collabs-link');
+    const collabsModal = document.getElementById('collabs-modal');
+    
+    if (moreCollabsLink && collabsModal) {
+        const closeModalBtn = collabsModal.querySelector('.modal-close-btn');
+        const modalOverlay = collabsModal.querySelector('.modal-overlay');
+
+        const openModal = () => {
+            populateActiveProjects();
+            collabsModal.classList.add('is-open');
+        };
+        const closeModal = () => collabsModal.classList.remove('is-open');
+
+        moreCollabsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            openModal();
+        });
+        closeModalBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', closeModal);
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && collabsModal.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+    }
+
+    // Join us links functionality
+    const joinUsLinks = document.querySelectorAll('.join-us-link, .join-us-btn');
+    joinUsLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.open('https://x.com/i/communities/1948283127836856671/about', '_blank');
+        });
+    });
+
+    // Function to dynamically populate active projects in modal
+    function populateActiveProjects() {
+        const activeProjectsList = document.getElementById('active-projects-list');
+        if (!activeProjectsList) return;
+
+        // Get all cards from the carousel
+        const cards = document.querySelectorAll('.card');
+        activeProjectsList.innerHTML = '';
+
+        cards.forEach(card => {
+            const title = card.querySelector('h3').textContent;
+            const description = card.querySelector('p').textContent;
+            const link = card.querySelector('.card-link').href;
+            
+            // Skip placeholder cards with # links
+            if (link === '#' || link.includes('#')) return;
+
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = link;
+            a.target = '_blank';
+            a.textContent = `${title} - ${description}`;
+            li.appendChild(a);
+            activeProjectsList.appendChild(li);
+        });
+    }
+
     // Create brass lines for footer
     function createBrassLines() {
         const containers = document.querySelectorAll('.brass-lines-container');
