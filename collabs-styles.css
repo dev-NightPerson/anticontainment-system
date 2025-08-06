@@ -17,6 +17,18 @@
     background: linear-gradient(135deg, #010101 0%, #1a1a1a 100%);
 }
 
+.carousel-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 0%, #cd7f32 20%, #e6a861 50%, #cd7f32 80%, transparent 100%);
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+    z-index: 10;
+}
+
 .scene {
     width: 100%;
     height: 100%;
@@ -244,7 +256,7 @@
     padding: 1rem;
     position: relative;
     flex: 1;
-    min-height: auto;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -552,17 +564,28 @@
     }
     
     .collaborators-title {
-        font-size: 1.5rem;
+        text-align: center;
     }
     
     .footer-columns {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 1.5rem;
+        text-align: center;
     }
     
     .footer-section {
+        flex: 1;
+        min-height: 0;
         padding: 1.5rem;
-        min-height: 250px;
+        text-align: center;
+    }
+
+    .footer-content {
+        padding-top: 2rem; /* Add buffer */
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     #collabs-modal .modal-content {
@@ -615,5 +638,17 @@
     
     .card[data-angle="300"] {
         transform: rotateY(300deg) translateZ(150px);
+    }
+    
+    .footer-section {
+        text-align: center;
+        padding-top: 2rem;
+    }
+
+    .footer-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
     }
 }
