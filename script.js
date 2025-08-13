@@ -22,6 +22,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Copy CA button
+    const copyBtn = document.getElementById('copy-ca-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const ca = '2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump';
+            navigator.clipboard.writeText(ca).then(() => {
+                const feedback = document.getElementById('copy-feedback');
+                feedback.classList.add('show');
+                setTimeout(() => {
+                    feedback.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        });
+    }
+
     // Collabs button logic
     const collabsBtn = document.getElementById('collabs-btn');
     if (collabsBtn) {

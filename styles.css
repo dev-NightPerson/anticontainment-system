@@ -179,6 +179,83 @@ html, body {
     transform: translateX(5px);
 }
 
+/* Connect column tooltip */
+.connect-header {
+    position: relative;
+    display: inline-block;
+}
+
+.connect-header h3 {
+    cursor: help;
+}
+
+.connect-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 10px;
+    padding: 1rem;
+    background: #1a1a1a;
+    border: 1px solid #cd7f32;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    width: 280px;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+    text-align: left;
+}
+
+.connect-header:hover .connect-tooltip {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.connect-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #cd7f32 transparent;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: #f5f5dc;
+}
+
+.tooltip-row:last-child {
+    margin-bottom: 0;
+}
+
+.tooltip-row strong {
+    color: #cd7f32;
+    margin-right: 8px;
+}
+
+.tooltip-row span {
+    word-break: break-all;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.tooltip-divider {
+    border: 0;
+    height: 1px;
+    background: #444;
+    margin: 0.75rem 0;
+}
+
 /* Add animated brass lines */
 .brass-lines-container {
     position: absolute;
@@ -380,6 +457,90 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+/* Top Right Info */
+.top-right-info {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(1, 1, 1, 0.7);
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    backdrop-filter: blur(3px);
+}
+
+.ca-text {
+    color: #cd7f32;
+    font-size: 0.75rem;
+    font-family: 'Courier New', Courier, monospace;
+    animation: glow 2s ease-in-out infinite alternate;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px; /* Truncate text for smaller screens */
+    cursor: help;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 4px rgba(205, 127, 50, 0.5), 0 0 8px rgba(205, 127, 50, 0.5);
+    }
+    to {
+        text-shadow: 0 0 8px rgba(230, 168, 97, 0.8), 0 0 16px rgba(230, 168, 97, 0.8);
+    }
+}
+
+#copy-ca-btn {
+    background: none;
+    border: 1px solid #cd7f32;
+    color: #cd7f32;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+#copy-ca-btn:hover {
+    background: #cd7f32;
+    color: #010101;
+}
+
+#copy-ca-btn svg {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    display: block;
+}
+
+#copy-feedback {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #e6a861;
+    color: #010101;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none;
+}
+
+#copy-feedback.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Updates and Collabs Buttons */
@@ -658,6 +819,22 @@ html, body {
         top: 10px;
         left: 10px;
         gap: 8px;
+    }
+
+    .top-right-info {
+        top: 10px;
+        right: 10px;
+        padding: 4px 8px;
+    }
+
+    .ca-text {
+        font-size: 0.65rem;
+        max-width: 80px;
+    }
+
+    #copy-ca-btn svg {
+        width: 10px;
+        height: 10px;
     }
 
     #updates-btn, #collabs-btn {

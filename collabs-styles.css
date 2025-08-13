@@ -314,6 +314,11 @@
     transform: translateY(-2px);
 }
 
+/* Make sure top right info is visible */
+.top-right-info {
+    z-index: 1001 !important; /* Ensure it's above other elements */
+}
+
 /* Collaborations Modal */
 #collabs-modal {
     position: fixed;
