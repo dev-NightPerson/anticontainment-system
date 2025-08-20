@@ -566,6 +566,29 @@ html, body {
     transform: translateY(-2px);
 }
 
+/* NEW BUTTON STYLE */
+#new-modal-btn {
+    padding: 6px 12px;
+    background: #010101;
+    color: #cd7f32;
+    border: 2px solid #cd7f32;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+    width: 100%; /* Make it fill its container like system-btn */
+}
+
+#new-modal-btn:hover {
+    background: #cd7f32;
+    color: #010101;
+    box-shadow: 0 0 20px rgba(205, 127, 50, 0.7);
+    transform: translateY(-2px);
+}
+
 /* Modal Styles */
 #updates-modal {
     position: fixed;
@@ -912,7 +935,6 @@ html, body {
     color: #cd7f32; /* Bronze color */
     margin-top: 0.8em; /* Add some space above */
     margin-bottom: 0.4em;
-    font-weight: bold;
 }
 
 /* Ensure list styles are consistent */
@@ -1008,13 +1030,80 @@ html, body {
     min-width: unset; /* Ensure no minimum width is applied */
 }
 
-/* Ensure the hover/active styles still apply correctly to buttons in this row */
-.roadmap-snapshot-row .panel-link:hover,
-.roadmap-snapshot-row .panel-link.active {
-    background: rgba(205, 127, 50, 0.1);
-    color: #e6a861;
-    transform: translateX(3px);
+/* NEW MODAL STYLES */
+#new-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
+
+#new-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Specific styles for the new embed modal */
+.new-modal-content {
+    position: relative;
+    background: #010101;
+    border: 2px solid #cd7f32;
+    border-radius: 8px;
+    padding: 2.5rem; 
+    width: 90%; /* Responsive width, will adapt to content if larger */
+    max-width: 900px; /* Increased max-width to allow for the embed + padding on large screens */
+    max-height: 90vh; /* Set max-height to ensure it fits on screen and allows scroll */
+    overflow-y: auto; /* Allow scrolling for content within this modal */
+    display: flex;
+    flex-direction: column; 
+    background-image: url('https://dev-nightperson.github.io/anticontainments-system/shortloop.gif'); /* Maintain existing background if any */
+    background-size: cover; /* or 100%, cover for background */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: local; /* Changes from fixed to local for better scrolling behavior within modal */
+}
+
+#new-modal.is-open .new-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.new-modal-content .modal-close-btn {
+    top: 10px;
+    right: 15px;
+    font-size: 2rem;
+}
+
+/* Ensure the embed container has enough space */
+.new-modal-content .modal-body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Hide scrollbars if embed generates its own */
+    display: flex; /* Add flexbox to center content */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    flex-grow: 1; /* Allow modal-body to grow and take available space */
+}
+
+/* Style the specific embed container element */
+#deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0 {
+    /* Set preferred max dimensions, allowing it to shrink responsively.
+       This is key to allowing the embed to show "at its max size" when space allows,
+       but still be responsive on smaller screens. */
+    max-width: 700px; /* Preferred maximum width for desktop */
+    max-height: 500px; /* Preferred maximum height for desktop */
+    width: 100%; /* Always try to fill 100% of parent width, up to max-width */
+    height: auto; /* Let height adjust proportionally to maintain aspect ratio */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -1101,6 +1190,12 @@ html, body {
         padding: 5px 10px;
         font-size: 0.7rem;
     }
+
+    /* NEW BUTTON MOBILE STYLE */
+    #new-modal-btn {
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
     
     .modal-content {
         width: 95%;
@@ -1171,6 +1266,30 @@ html, body {
     .roadmap-snapshot-row .snapshot-button {
         padding: 0.2rem 0.4rem;
         font-size: 0.55rem;
+    }
+
+    /* NEW MODAL MOBILE STYLE */
+    .new-modal-content {
+        width: 95%;
+        max-width: 95%; /* Allow it to scale more on mobile */
+        padding: 1.5rem;
+    }
+    
+    .new-modal-content .modal-close-btn {
+        font-size: 1.8rem;
+    }
+
+    /* Disable min-dimensions for modal-body on mobile - now redundant but kept for clarity */
+    .new-modal-content .modal-body {
+        min-width: unset;
+        min-height: unset;
+    }
+
+    /* Override the specific embed container element for mobile */
+    #deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0 {
+        max-width: 100%; /* On mobile, let it take full width of the modal-body */
+        max-height: 100%; /* On mobile, let it take full height */
+        /* width: 100%; height: auto; are already set globally and apply */
     }
 }
 

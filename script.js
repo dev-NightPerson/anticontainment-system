@@ -378,6 +378,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (systemModal && systemModal.classList.contains('is-open')) {
                 closeSystemModal(); // Close system modal first
             }
+            if (newModal && newModal.classList.contains('is-open')) { // Close new modal if open
+                closeNewModal();
+            }
             openUpdatesModal(); // Then open updates modal
         });
         updatesModalCloseBtn.addEventListener('click', closeUpdatesModal);
@@ -398,7 +401,46 @@ document.addEventListener('DOMContentLoaded', function() {
             if (systemModal && systemModal.classList.contains('is-open')) {
                 closeSystemModal(); // Close system modal first
             }
+            if (updatesModal && updatesModal.classList.contains('is-open')) { // Close updates modal if open
+                closeUpdatesModal();
+            }
+            if (newModal && newModal.classList.contains('is-open')) { // Close new modal if open
+                closeNewModal();
+            }
             window.location.href = 'collabs.html'; // Then navigate
+        });
+    }
+
+    // --- New Modal Logic ---
+    const newModalBtn = document.getElementById('new-modal-btn');
+    const newModal = document.getElementById('new-modal');
+
+    if (newModalBtn && newModal) {
+        const newModalCloseBtn = newModal.querySelector('.modal-close-btn');
+        const newModalOverlay = newModal.querySelector('.modal-overlay');
+
+        const openNewModal = () => newModal.classList.add('is-open');
+        const closeNewModal = () => newModal.classList.remove('is-open');
+
+        newModalBtn.addEventListener('click', () => {
+            // Close other modals if open
+            if (systemModal && systemModal.classList.contains('is-open')) {
+                closeSystemModal();
+            }
+            if (updatesModal && updatesModal.classList.contains('is-open')) {
+                closeUpdatesModal();
+            }
+            openNewModal(); // Then open the new modal
+        });
+
+        newModalCloseBtn.addEventListener('click', closeNewModal);
+        newModalOverlay.addEventListener('click', closeNewModal);
+
+        // Close new modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && newModal.classList.contains('is-open')) {
+                closeNewModal();
+            }
         });
     }
 
