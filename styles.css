@@ -544,7 +544,7 @@ html, body {
 }
 
 /* Updates and Collabs Buttons */
-#updates-btn, #collabs-btn {
+#system-btn {
     padding: 6px 12px;
     background: #010101;
     color: #cd7f32;
@@ -559,7 +559,7 @@ html, body {
     width: 100%;
 }
 
-#updates-btn:hover, #collabs-btn:hover {
+#system-btn:hover {
     background: #cd7f32;
     color: #010101;
     box-shadow: 0 0 20px rgba(205, 127, 50, 0.7);
@@ -756,6 +756,266 @@ html, body {
     margin-right: 8px;
 }
 
+/* New System Modal Styles */
+#system-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#system-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.system-modal-content {
+    position: relative;
+    background: #010101;
+    border: 2px solid #cd7f32;
+    border-radius: 8px;
+    padding: 1.2rem;
+    width: 90vw;
+    max-width: 800px;
+    aspect-ratio: 1 / 1;
+    color: #f5f5dc;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+#system-modal.is-open .system-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.system-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+.system-panel {
+    background: #101010;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.system-panel h3 {
+    color: #cd7f32;
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+    text-align: center;
+    border-bottom: 1px solid #444;
+    padding-bottom: 0.4rem;
+}
+
+/* Specific styling for the panel links list */
+.panel-links-list {
+    list-style: none; /* Remove bullets */
+    padding: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px; /* Add some padding for scrollbar */
+}
+
+.panel-links-list li {
+    margin-bottom: 0.4rem;
+}
+
+.panel-link {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.8rem;
+    background: none;
+    border: none;
+    color: #cd7f32; /* Bronze color for links */
+    text-align: left;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.panel-link:hover,
+.panel-link.active {
+    background: rgba(205, 127, 50, 0.1); /* Light bronze background on hover/active */
+    color: #e6a861; /* Lighter bronze text on hover/active */
+    transform: translateX(3px);
+}
+
+/* Shared scrollbar styling for system modal panels */
+.system-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.system-panel.tl-panel::-webkit-scrollbar {
+    /* For left panels, scrollbar on left */
+    width: 6px;
+}
+.system-panel.tl-panel::-webkit-scrollbar-track {
+    background: #0a0a0a;
+    border-radius: 3px;
+}
+.system-panel.tl-panel::-webkit-scrollbar-thumb {
+    background: #cd7f32; /* Bronze */
+    border-radius: 3px;
+    border: 1px solid #0a0a0a;
+}
+.system-panel.tl-panel::-webkit-scrollbar-thumb:hover {
+    background: #e6a861; /* Lighter bronze on hover */
+}
+
+
+.system-panel.tr-panel::-webkit-scrollbar {
+    /* For right panels, scrollbar on right */
+    width: 6px;
+}
+.system-panel.tr-panel::-webkit-scrollbar-track {
+    background: #0a0a0a;
+    border-radius: 3px;
+}
+.system-panel.tr-panel::-webkit-scrollbar-thumb {
+    background: #cd7f32; /* Bronze */
+    border-radius: 3px;
+    border: 1px solid #0a0a0a;
+}
+.system-panel.tr-panel::-webkit-scrollbar-thumb:hover {
+    background: #e6a861; /* Lighter bronze on hover */
+}
+
+/* Firefox scrollbar styling for system modal panels */
+.system-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #cd7f32 #0a0a0a; /* Bronze thumb, dark track */
+}
+
+/* New style for sub-titles within info display */
+.info-subtitle {
+    font-size: 0.9rem; /* Slightly bigger than default text */
+    color: #cd7f32; /* Bronze color */
+    margin-top: 0.8em; /* Add some space above */
+    margin-bottom: 0.4em;
+    font-weight: bold;
+}
+
+/* Ensure list styles are consistent */
+.panel-content-display ul {
+    list-style-type: disc; /* Use disk bullets */
+    padding-left: 1.2em; /* Indent list items */
+    margin-bottom: 0.5em;
+}
+
+.panel-content-display ul ul {
+    list-style-type: circle; /* Sub-bullets */
+    padding-left: 1.2em;
+}
+
+.panel-content-display li {
+    margin-bottom: 0.2em;
+}
+
+.panel-content-display {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #ddd;
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 5px;
+    max-height: 100%;
+}
+
+.panel-content-display img {
+    max-width: 100%; /* Ensure image fits container width */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove extra space below image */
+    margin: 0 auto; /* Center image */
+}
+
+.panel-content-display p {
+    margin-bottom: 0.5em;
+}
+
+.panel-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+    overflow-y: auto;
+    padding-right: 5px;
+    max-height: 100%;
+}
+
+.system-action-btn {
+    padding: 6px 10px;
+    background: #010101;
+    color: #cd7f32;
+    border: 2px solid #cd7f32;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px rgba(205, 127, 50, 0.2);
+    width: 100%;
+}
+
+.system-action-btn:hover {
+    background: #cd7f32;
+    color: #010101;
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.5);
+    transform: translateY(-1px);
+}
+
+/* Styles for the row containing Roadmap and Snapshot buttons */
+.roadmap-snapshot-row {
+    display: flex;
+    justify-content: space-between; /* Pushes Roadmap left, Snapshot right */
+    align-items: center; /* Vertically align them */
+    width: 100%; /* Ensure it spans the full width of the ul */
+    margin-bottom: 0.4rem; /* Maintain spacing between list items */
+}
+
+/* Override default panel-link width for buttons within this row */
+.roadmap-snapshot-row .panel-link {
+    width: auto; /* Allow buttons to take only necessary width */
+    flex-grow: 0; /* Prevent them from growing */
+    white-space: nowrap; /* Prevent text from wrapping */
+    margin: 0; /* Reset default margins from li if any */
+}
+
+/* Specific styles for the Snapshot button to make it tiny */
+.roadmap-snapshot-row .snapshot-button {
+    padding: 0.3rem 0.6rem; /* Smaller padding */
+    font-size: 0.65rem; /* Even smaller font size */
+    min-width: unset; /* Ensure no minimum width is applied */
+}
+
+/* Ensure the hover/active styles still apply correctly to buttons in this row */
+.roadmap-snapshot-row .panel-link:hover,
+.roadmap-snapshot-row .panel-link.active {
+    background: rgba(205, 127, 50, 0.1);
+    color: #e6a861;
+    transform: translateX(3px);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .header-title {
@@ -837,7 +1097,7 @@ html, body {
         height: 10px;
     }
 
-    #updates-btn, #collabs-btn {
+    #system-btn {
         padding: 5px 10px;
         font-size: 0.7rem;
     }
@@ -869,22 +1129,110 @@ html, body {
     .update-column h3 {
         font-size: 1.1rem;
     }
+
+    /* System Modal Mobile */
+    .system-modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        padding: 0.8rem;
+        max-height: 95vh;
+        aspect-ratio: 1 / 1;
+    }
+
+    .system-panel {
+        padding: 0.6rem;
+    }
+
+    .system-panel h3 {
+        font-size: 0.8rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .panel-link {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .panel-content-display {
+        font-size: 0.7rem;
+        line-height: 1.3;
+    }
+
+    .panel-buttons {
+        gap: 6px;
+    }
+
+    .system-action-btn {
+        padding: 5px 8px;
+        font-size: 0.65rem;
+    }
+
+    /* Mobile adjustment for the Snapshot button */
+    .roadmap-snapshot-row .snapshot-button {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.55rem;
+    }
 }
 
-@media (max-width: 480px) {
-    .header-title {
-        font-size: 2rem;
-    }
-    
-    .banner-title {
-        font-size: 2rem;
-    }
-    
-    .banner-content {
-        padding: 1rem;
-    }
-    
-    .footer-section {
-        padding: 2rem 1rem;
+/* Image Lightbox Styles */
+#image-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001; /* Higher than other modals */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#image-lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.image-lightbox-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+}
+
+.image-lightbox-content {
+    position: relative;
+    width: 90vw;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Ensure image doesn't spill */
+}
+
+.image-lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border: 2px solid #cd7f32;
+    box-shadow: 0 0 25px rgba(205, 127, 50, 0.6);
+    transform: scale(0.9);
+    transition: transform 0.3s ease-out;
+}
+
+#image-lightbox.is-open .image-lightbox-img {
+    transform: scale(1);
+}
+
+@media (max-width: 768px) {
+    .image-lightbox-content {
+        width: 95vw;
+        height: 95vh;
     }
 }

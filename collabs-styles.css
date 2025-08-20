@@ -36,6 +36,24 @@
     transform-style: preserve-3d;
 }
 
+/* New wrapper for cube and outer carousel for global 3D rotations */
+.carousel-scene-content {
+    position: absolute; /* Relative to .scene */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform: rotateX(0deg) translateZ(0); /* Default normal view */
+    transition: transform 0.8s ease-in-out;
+}
+
+/* Birdseye View State for the whole scene content */
+.scene.birdseye .carousel-scene-content {
+    /* Rotate to look down, translate Z to pull back */
+    transform: rotateX(-40deg) translateY(-80px) translateZ(400px); /* Adjusted for mobile */
+}
+
 /* Central Cube */
 .cube-container {
     position: absolute;
@@ -43,79 +61,98 @@
     left: 50%;
     transform: translate(-50%, -50%);
     transform-style: preserve-3d;
+    z-index: 10; /* Ensure cube is on top of outer carousel */
 }
 
 .cube {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     position: relative;
     transform-style: preserve-3d;
 }
 
 .cube-face {
     position: absolute;
-    width: 100px;
-    height: 100px;
-    background-image: url('https://dev-nightperson.github.io/anticontainment-system/shortloop.gif');
+    width: 80px;
+    height: 80px;
+    background-image: url('https://anticontainmentsystem.com/pfp/tokenimage.png');
     background-size: cover;
     background-position: center;
     border: 2px solid #cd7f32;
     opacity: 0.8;
 }
 
-.cube-face.front { transform: rotateY(0deg) translateZ(50px); }
-.cube-face.back { transform: rotateY(180deg) translateZ(50px); }
-.cube-face.right { transform: rotateY(90deg) translateZ(50px); }
-.cube-face.left { transform: rotateY(-90deg) translateZ(50px); }
-.cube-face.top { transform: rotateX(90deg) translateZ(50px); }
-.cube-face.bottom { transform: rotateX(-90deg) translateZ(50px); }
+.cube-face.front { transform: rotateY(0deg) translateZ(40px); }
+.cube-face.back { transform: rotateY(180deg) translateZ(40px); }
+.cube-face.right { transform: rotateY(90deg) translateZ(40px); }
+.cube-face.left { transform: rotateY(-90deg) translateZ(40px); }
+.cube-face.top { transform: rotateX(90deg) translateZ(40px); }
+.cube-face.bottom { transform: rotateX(-90deg) translateZ(40px); }
 
-/* Carousel Cards */
+/* Outer Carousel */
+.outer-carousel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateY(0deg); /* Initial state, will be controlled by JS */
+    transform-style: preserve-3d;
+    width: 100%; /* Occupy full scene width for positioning */
+    height: 100%; /* Occupy full scene height */
+    transition: transform 0.6s ease; /* Smooth transition for outer carousel rotation */
+}
+
+/* Inner Carousel Cards (Multiple groups) */
 .carousel {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 200px;
     height: 200px;
-    transform: translate(-50%, -50%);
+    /* translate(-50%, -50%) is handled by JS for centering */
     transform-style: preserve-3d;
+    /* transition removed here as transform is fully controlled by JS for inner + outer positioning */
 }
 
+/* Positioning for each inner carousel within the outer carousel - handled by JS now */
+/* Initial positioning transforms are now primarily controlled via JS in animateInnerCarousels */
+
+/* Individual card positioning within their respective carousels */
 .card {
     position: absolute;
-    width: 200px;
-    height: 260px;
+    width: 160px;
+    height: 208px;
     transform-style: preserve-3d;
     cursor: pointer;
     transition: transform 0.6s ease;
 }
 
 .card[data-angle="0"] {
-    transform: rotateY(0deg) translateZ(300px);
+    transform: rotateY(0deg) translateZ(240px);
 }
 
 .card[data-angle="60"] {
-    transform: rotateY(60deg) translateZ(300px);
+    transform: rotateY(60deg) translateZ(240px);
 }
 
 .card[data-angle="120"] {
-    transform: rotateY(120deg) translateZ(300px);
+    transform: rotateY(120deg) translateZ(240px);
 }
 
 .card[data-angle="180"] {
-    transform: rotateY(180deg) translateZ(300px);
+    transform: rotateY(180deg) translateZ(240px);
 }
 
 .card[data-angle="240"] {
-    transform: rotateY(240deg) translateZ(300px);
+    transform: rotateY(240deg) translateZ(240px);
 }
 
 .card[data-angle="300"] {
-    transform: rotateY(300deg) translateZ(300px);
+    transform: rotateY(300deg) translateZ(240px);
 }
 
 .card:hover {
-    transform: rotateY(var(--angle)) translateZ(350px) rotateX(10deg) scale(1.05);
+    /* Keep the hover effect relative to its position in the inner carousel */
+    transform: rotateY(var(--angle)) translateZ(280px) rotateX(10deg) scale(1.05);
 }
 
 .card-inner {
@@ -141,7 +178,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 
+    box-shadow:
         0 10px 30px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: relative;
@@ -183,19 +220,19 @@
 .card-content:hover {
     background: linear-gradient(135deg, rgba(42, 42, 42, 0.7) 0%, rgba(58, 58, 58, 0.7) 50%, rgba(42, 42, 42, 0.7) 100%);
     transform: translateY(-2px);
-    box-shadow: 
+    box-shadow:
         0 15px 40px rgba(0, 0, 0, 0.7),
         inset 0 1px 0 rgba(255, 255, 255, 0.2),
         0 0 20px rgba(205, 127, 50, 0.3);
 }
 
 .card-image {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid #cd7f32;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .card-image img {
@@ -206,17 +243,17 @@
 
 .card h3 {
     color: #cd7f32;
-    font-size: 1rem;
-    margin-bottom: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
     text-align: center;
     font-weight: bold;
 }
 
 .card p {
     color: #f5f5dc;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     line-height: 1.4;
 }
 
@@ -224,9 +261,9 @@
     color: #cd7f32;
     text-decoration: none;
     border: 1px solid #cd7f32;
-    padding: 6px 12px;
+    padding: 5px 10px;
     border-radius: 4px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: bold;
     transition: all 0.3s ease;
     text-align: center;
@@ -247,6 +284,41 @@
     color: #010101 !important;
     transform: translateY(-3px) !important;
     box-shadow: 0 6px 16px rgba(205, 127, 50, 0.6) !important;
+}
+
+/* Carousel Navigation Arrows */
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(1, 1, 1, 0.7);
+    color: #cd7f32;
+    border: 2px solid #cd7f32;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 20; /* Above cube and carousels */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.carousel-arrow:hover {
+    background: #cd7f32;
+    color: #010101;
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.5);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-arrow.left-arrow {
+    left: 20px;
+}
+
+.carousel-arrow.right-arrow {
+    right: 20px;
 }
 
 /* Footer Section */
@@ -314,6 +386,36 @@
     transform: translateY(-2px);
 }
 
+/* New Top Center Controls Container */
+.top-center-controls {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+#birdseye-btn {
+    padding: 6px 12px;
+    background: #010101;
+    color: #cd7f32;
+    border: 2px solid #cd7f32;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+}
+
+#birdseye-btn:hover {
+    background: #cd7f32;
+    color: #010101;
+    box-shadow: 0 0 20px rgba(205, 127, 50, 0.7);
+    transform: translateY(-2px);
+}
+
 /* Make sure top right info is visible */
 .top-right-info {
     z-index: 1001 !important; /* Ensure it's above other elements */
@@ -363,7 +465,7 @@
     color: #f5f5dc;
     transform: scale(0.95) translateY(10px);
     transition: transform 0.3s ease;
-    background-image: url('https://dev-nightperson.github.io/anticontainment-system/shortloop.gif');
+    background-image: url('https://dev-nightperson.github.io/anticontainments-system/shortloop.gif');
     background-size: 100%;
     background-position: center;
     background-repeat: no-repeat;
@@ -516,56 +618,70 @@
     .cube-face.bottom { transform: rotateX(-90deg) translateZ(30px); }
     
     .card {
-        width: 180px;
-        height: 230px;
+        width: 140px;
+        height: 182px;
     }
     
     .card[data-angle="0"] {
-        transform: rotateY(0deg) translateZ(200px);
+        transform: rotateY(0deg) translateZ(180px);
     }
     
     .card[data-angle="60"] {
-        transform: rotateY(60deg) translateZ(200px);
+        transform: rotateY(60deg) translateZ(180px);
     }
     
     .card[data-angle="120"] {
-        transform: rotateY(120deg) translateZ(200px);
+        transform: rotateY(120deg) translateZ(180px);
     }
     
     .card[data-angle="180"] {
-        transform: rotateY(180deg) translateZ(200px);
+        transform: rotateY(180deg) translateZ(180px);
     }
     
     .card[data-angle="240"] {
-        transform: rotateY(240deg) translateZ(200px);
+        transform: rotateY(240deg) translateZ(180px);
     }
     
     .card[data-angle="300"] {
-        transform: rotateY(300deg) translateZ(200px);
+        transform: rotateY(300deg) translateZ(180px);
     }
     
     .card:hover {
-        transform: rotateY(var(--angle)) translateZ(220px) rotateX(5deg) scale(1.02);
+        transform: rotateY(var(--angle)) translateZ(200px) rotateX(5deg) scale(1.02);
+    }
+    
+    /* Outer carousel radius adjustment for mobile */
+    /* These properties are now primarily controlled by JS for translateZ part */
+    .outer-carousel .carousel[data-group-index="0"] {
+        transform: translate(-50%, -50%) rotateY(0deg); /* translateZ removed, now controlled by JS */
+    }
+    
+    .outer-carousel .carousel[data-group-index="1"] {
+        transform: translate(-50%, -50%) rotateY(120deg); /* translateZ removed, now controlled by JS */
+    }
+    
+    .outer-carousel .carousel[data-group-index="2"] {
+        transform: translate(-50%, -50%) rotateY(240deg); /* translateZ removed, now controlled by JS */
     }
     
     .card-content {
-        padding: 12px;
+        padding: 10px;
     }
     
     .card-image {
-        width: 50px;
-        height: 50px;
-        margin-bottom: 8px;
-    }
-    
-    .card h3 {
-        font-size: 0.9rem;
+        width: 40px;
+        height: 40px;
         margin-bottom: 6px;
     }
     
+    .card h3 {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    
     .card p {
-        font-size: 0.7rem;
-        margin-bottom: 12px;
+        font-size: 0.65rem;
+        margin-bottom: 10px;
     }
     
     .collaborators-title {
@@ -607,6 +723,23 @@
         padding: 10px 20px;
         font-size: 0.9rem;
     }
+
+    .carousel-arrow {
+        width: 30px;
+        height: 30px;
+        font-size: 1.2rem;
+    }
+    .carousel-arrow.left-arrow { left: 10px; }
+    .carousel-arrow.right-arrow { right: 10px; }
+
+    /* Mobile responsiveness for the new button */
+    .top-center-controls {
+        top: 10px; /* Adjust top position for mobile */
+    }
+    #birdseye-btn {
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -617,32 +750,32 @@
     }
     
     .card {
-        width: 140px;
-        height: 180px;
+        width: 120px;
+        height: 156px;
     }
     
     .card[data-angle="0"] {
-        transform: rotateY(0deg) translateZ(150px);
+        transform: rotateY(0deg) translateZ(130px);
     }
     
     .card[data-angle="60"] {
-        transform: rotateY(60deg) translateZ(150px);
+        transform: rotateY(60deg) translateZ(130px);
     }
     
     .card[data-angle="120"] {
-        transform: rotateY(120deg) translateZ(150px);
+        transform: rotateY(120deg) translateZ(130px);
     }
     
     .card[data-angle="180"] {
-        transform: rotateY(180deg) translateZ(150px);
+        transform: rotateY(180deg) translateZ(130px);
     }
     
     .card[data-angle="240"] {
-        transform: rotateY(240deg) translateZ(150px);
+        transform: rotateY(240deg) translateZ(130px);
     }
     
     .card[data-angle="300"] {
-        transform: rotateY(300deg) translateZ(150px);
+        transform: rotateY(300deg) translateZ(130px);
     }
     
     .footer-section {

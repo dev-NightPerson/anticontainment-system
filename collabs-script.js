@@ -51,38 +51,74 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- Birdseye View Logic ---
+    const birdseyeBtn = document.getElementById('birdseye-btn');
+    const sceneElement = document.querySelector('.scene');
+    let isBirdseyeView = false;
+
     // --- Start of Carousel and Cube Interaction Logic ---
 
-    const scene = document.querySelector('.scene');
-    const carousel = document.querySelector('.carousel');
+    const outerCarousel = document.querySelector('.outer-carousel'); // New outer carousel wrapper
+    const innerCarousels = document.querySelectorAll('.carousel'); // All inner carousels
     const cube = document.querySelector('.cube');
+    const leftArrow = document.querySelector('.left-arrow');
+    const rightArrow = document.querySelector('.right-arrow');
 
-    if (scene && carousel && cube) {
-        let carouselYAngle = 0;
+    // Ensure all required elements exist before proceeding with 3D logic
+    if (sceneElement && outerCarousel && innerCarousels.length > 0 && cube) {
+        let rotationCounter = 0; // Tracks number of 120-degree rotations, can be negative for right clicks
+        const totalGroups = innerCarousels.length; // 3 groups
+        const outerAngleIncrement = 360 / totalGroups; // 120 degrees
+
+        let innerCarouselAngles = new Map();
+        innerCarousels.forEach(carouselEl => {
+            innerCarouselAngles.set(carouselEl, 0);
+        });
+
         let cubeXAngle = 0;
         let cubeYAngle = 0;
+        let cubeStartAngleX = 0; // New: Store cube's X angle at drag start
+        let cubeStartAngleY = 0; // New: Store cube's Y angle at drag start
 
-        let isCarouselDragging = false;
+        let isOuterCarouselDragging = false;
         let isCubeDragging = false;
         let startX, startY;
-        let lastX, lastY;
-        let carouselStartAngle;
-        let cubeStartAngleX, cubeStartAngleY;
+        let dragStartRotationCounter; // Store rotationCounter at drag start
 
-        let carouselAnimationId;
-        let cubeAnimationId;
+        let innerCarouselsAnimationId = null; // Initialize to null
+        let cubeAnimationId = null; // Initialize to null
         
-        const carouselSpeed = 0.05; // degrees per frame
+        const innerCarouselSpeed = 0.05;
         const cubeSpeedX = 0.1;
         const cubeSpeedY = 0.12;
+        const desktopGroupRadius = 350; // Reduced from 450
+        const mobileGroupRadius = 250; // Reduced from 300
 
         // --- Animation Loops ---
-        const animateCarousel = () => {
-            if (!isCarouselDragging) {
-                carouselYAngle = (carouselYAngle + carouselSpeed) % 360;
-                carousel.style.transform = `translate(-50%, -50%) rotateY(${carouselYAngle}deg)`;
-            }
-            carouselAnimationId = requestAnimationFrame(animateCarousel);
+        // Animate individual inner carousels
+        const animateInnerCarousels = () => {
+            innerCarousels.forEach(carouselEl => {
+                let currentAngle = innerCarouselAngles.get(carouselEl);
+                currentAngle = (currentAngle + innerCarouselSpeed) % 360;
+                innerCarouselAngles.set(carouselEl, currentAngle);
+
+                const groupIndex = parseInt(carouselEl.dataset.groupIndex);
+                
+                let currentGroupRadius = desktopGroupRadius; // Default to desktop
+                if (window.matchMedia('(max-width: 768px)').matches) {
+                    currentGroupRadius = mobileGroupRadius; // Use mobile radius if applicable
+                }
+
+                // The baseAngle positions the entire inner carousel within the outer ring
+                // The currentAngle is the inner carousel's own rotation
+                carouselEl.style.transform = `
+                    translate(-50%, -50%)
+                    rotateY(${groupIndex * outerAngleIncrement}deg)
+                    translateZ(${currentGroupRadius}px)
+                    rotateY(${currentAngle}deg)
+                `;
+            });
+            innerCarouselsAnimationId = requestAnimationFrame(animateInnerCarousels);
         };
 
         const animateCube = () => {
@@ -93,32 +129,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             cubeAnimationId = requestAnimationFrame(animateCube);
         };
+
+        // Function to start all animations (called when not in birdseye or on load)
+        const startAllAnimations = () => {
+            if (!innerCarouselsAnimationId) {
+                animateInnerCarousels();
+            }
+            if (!cubeAnimationId) {
+                animateCube();
+            }
+        };
         
-        // --- Event Handlers ---
+        // --- Event Handlers for Dragging ---
         const onDragStart = (e) => {
             e.preventDefault();
-            const target = e.target.closest('.cube-container') || e.target.closest('.cube');
+            const target = e.target.closest('.cube-container');
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
 
             if (target) {
                 isCubeDragging = true;
+                // Stop automatic cube rotation during drag
+                if (cubeAnimationId) {
+                    cancelAnimationFrame(cubeAnimationId);
+                    cubeAnimationId = null;
+                }
+                // Store current cube angles at the start of drag
                 cubeStartAngleX = cubeXAngle;
                 cubeStartAngleY = cubeYAngle;
             } else {
-                isCarouselDragging = true;
-                carouselStartAngle = carouselYAngle;
+                // If not cube, assume outer carousel dragging
+                isOuterCarouselDragging = true;
+                dragStartRotationCounter = rotationCounter; // Capture current accumulated rotation count
+                // Stop automatic inner carousel rotation during outer carousel drag
+                if (innerCarouselsAnimationId) {
+                    cancelAnimationFrame(innerCarouselsAnimationId);
+                    innerCarouselsAnimationId = null;
+                }
             }
             
             startX = clientX;
             startY = clientY;
-            lastX = clientX;
-            lastY = clientY;
-            scene.style.cursor = 'grabbing';
+            sceneElement.style.cursor = 'grabbing';
         };
 
         const onDragMove = (e) => {
-            if (!isCarouselDragging && !isCubeDragging) return;
+            if (!isOuterCarouselDragging && !isCubeDragging) return;
             
             const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
@@ -126,10 +182,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const dx = clientX - startX;
             const dy = clientY - startY;
 
-            if (isCarouselDragging) {
+            if (isOuterCarouselDragging) {
                 const rotationSensitivity = 0.25;
-                carouselYAngle = carouselStartAngle + dx * rotationSensitivity;
-                carousel.style.transform = `translate(-50%, -50%) rotateY(${carouselYAngle}deg)`;
+                // Calculate new angle based on drag relative to the start of drag
+                const currentDragAngle = dragStartRotationCounter * outerAngleIncrement + dx * rotationSensitivity;
+                // Snap the rotationCounter to the nearest full outerAngleIncrement step
+                rotationCounter = Math.round(currentDragAngle / outerAngleIncrement);
+                // Apply the transform based on the snapped rotationCounter
+                outerCarousel.style.transform = `translate(-50%, -50%) rotateY(${rotationCounter * outerAngleIncrement}deg)`;
             }
 
             if (isCubeDragging) {
@@ -138,37 +198,94 @@ document.addEventListener('DOMContentLoaded', function() {
                 cubeXAngle = cubeStartAngleX - dy * rotationSensitivity; // Invert Y for natural feel
                 cube.style.transform = `rotateX(${cubeXAngle}deg) rotateY(${cubeYAngle}deg)`;
             }
-
-            lastX = clientX;
-            lastY = clientY;
         };
 
         const onDragEnd = () => {
-            isCarouselDragging = false;
             isCubeDragging = false;
-            scene.style.cursor = 'grab';
+            isOuterCarouselDragging = false;
+            sceneElement.style.cursor = 'grab';
+
+            // Resume animations if not in birdseye view
+            if (!isBirdseyeView) {
+                startAllAnimations();
+            }
         };
 
+        // --- Arrow Navigation for Outer Carousel ---
+        const rotateOuterCarousel = (direction) => {
+            // Stop automatic inner carousel rotation during manual outer carousel rotation
+            if (innerCarouselsAnimationId) {
+                cancelAnimationFrame(innerCarouselsAnimationId);
+                innerCarouselsAnimationId = null;
+            }
+
+            if (direction === 'left') {
+                rotationCounter++; // Increment for counter-clockwise rotation (visual movement to previous group)
+            } else { // direction === 'right'
+                rotationCounter--; // Decrement for clockwise rotation (visual movement to next group)
+            }
+            // Ensure continuous looping
+            // The modulo operator (%) in JavaScript behaves differently for negative numbers.
+            // (a % n + n) % n ensures a positive result.
+            rotationCounter = (rotationCounter % totalGroups + totalGroups) % totalGroups;
+
+            outerCarousel.style.transform = `translate(-50%, -50%) rotateY(${rotationCounter * outerAngleIncrement}deg)`;
+
+            // Resume animations after rotation (if not in birdseye view)
+            if (!isBirdseyeView) {
+                startAllAnimations();
+            }
+        };
+
+        if (leftArrow) {
+            leftArrow.addEventListener('click', () => rotateOuterCarousel('left'));
+        }
+        if (rightArrow) {
+            rightArrow.addEventListener('click', () => rotateOuterCarousel('right'));
+        }
+
         // --- Add Event Listeners ---
-        scene.addEventListener('mousedown', onDragStart);
+        sceneElement.addEventListener('mousedown', onDragStart);
         document.addEventListener('mousemove', onDragMove);
         document.addEventListener('mouseup', onDragEnd);
         document.addEventListener('mouseleave', onDragEnd); // Handle mouse leaving the window
 
-        scene.addEventListener('touchstart', onDragStart, { passive: false });
+        sceneElement.addEventListener('touchstart', onDragStart, { passive: false });
         document.addEventListener('touchmove', onDragMove, { passive: false });
         document.addEventListener('touchend', onDragEnd);
         document.addEventListener('touchcancel', onDragEnd);
 
-        // Start animations
-        cancelAnimationFrame(carouselAnimationId);
-        cancelAnimationFrame(cubeAnimationId);
-        animateCarousel();
-        animateCube();
-        scene.style.cursor = 'grab';
+        // Initial start of animations
+        startAllAnimations();
+        sceneElement.style.cursor = 'grab';
     }
 
-    // --- End of Carousel and Cube Interaction Logic ---
+    // Birdseye button functionality
+    if (birdseyeBtn) {
+        birdseyeBtn.addEventListener('click', () => {
+            isBirdseyeView = !isBirdseyeView;
+            if (isBirdseyeView) {
+                sceneElement.classList.add('birdseye');
+                birdseyeBtn.textContent = 'Normal View';
+                // Explicitly cancel animations
+                if (innerCarouselsAnimationId) {
+                    cancelAnimationFrame(innerCarouselsAnimationId);
+                    innerCarouselsAnimationId = null;
+                }
+                if (cubeAnimationId) {
+                    cancelAnimationFrame(cubeAnimationId);
+                    cubeAnimationId = null;
+                }
+            } else {
+                sceneElement.classList.remove('birdseye');
+                birdseyeBtn.textContent = 'Birdseye View';
+                // Resume animations
+                if (typeof startAllAnimations === 'function') { // Check if function is defined due to scope
+                     startAllAnimations();
+                }
+            }
+        });
+    }
 
     // Contact on X link functionality
     const contactXLink = document.getElementById('contact-x-link');
@@ -222,18 +339,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeProjectsList = document.getElementById('active-projects-list');
         if (!activeProjectsList) return;
 
-        // Get all cards from the carousel
-        const cards = document.querySelectorAll('.card');
-        activeProjectsList.innerHTML = '';
+        // Get all cards from all carousels
+        const allCards = document.querySelectorAll('.carousel .card');
+        activeProjectsList.innerHTML = ''; // Clear existing list
 
-        cards.forEach(card => {
+        allCards.forEach(card => {
             const title = card.querySelector('h3').textContent;
             const description = card.querySelector('p').textContent;
             const link = card.querySelector('.card-link').href;
             
-            // Skip placeholder cards with # links
-            if (link === '#' || link.includes('#')) return;
-
             const li = document.createElement('li');
             const a = document.createElement('a');
             a.href = link;
@@ -244,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Create brass lines for footer
+    // Create brass lines for footer (this function is already in collab-script.js)
     function createBrassLines() {
         const containers = document.querySelectorAll('.brass-lines-container');
         containers.forEach(container => {
@@ -312,11 +426,13 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(column);
     });
 
-    // Add touch support for mobile
+    // Add touch support for mobile (Existing - might be somewhat redundant with mousedown/move/up for touch)
     let touchStartX = 0;
     let touchStartY = 0;
     
     document.addEventListener('touchstart', (e) => {
+        // These are already handled by onDragStart, but kept here for robustness
+        // if other touch logic were to be added.
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
     }, { passive: true });
@@ -331,5 +447,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const diffY = touchStartY - touchEndY;
         
         // Simple swipe detection could be added here for carousel interaction
+        // (This part is not connected to the 3D carousel drag, which uses the mousemove/touchmove handlers above)
     }, { passive: true });
 });

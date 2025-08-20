@@ -12,6 +12,10 @@
         <button id="back-btn">Back</button>
     </div>
 
+    <div class="top-center-controls">
+        <button id="birdseye-btn">Birdseye View</button>
+    </div>
+
     <div class="top-right-info">
         <span class="ca-text" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump">CA: 2pABQ...pump</span>
         <button id="copy-ca-btn" title="Copy to clipboard">
@@ -24,97 +28,258 @@
         <!-- Top Section with 3D Carousel -->
         <section class="carousel-section">
             <div class="scene">
-                <!-- Central Cube -->
-                <div class="cube-container">
-                    <div class="cube">
-                        <div class="cube-face front"></div>
-                        <div class="cube-face back"></div>
-                        <div class="cube-face right"></div>
-                        <div class="cube-face left"></div>
-                        <div class="cube-face top"></div>
-                        <div class="cube-face bottom"></div>
+                <div class="carousel-scene-content">
+                    <!-- Central Cube -->
+                    <div class="cube-container">
+                        <div class="cube">
+                            <div class="cube-face front"></div>
+                            <div class="cube-face back"></div>
+                            <div class="cube-face right"></div>
+                            <div class="cube-face left"></div>
+                            <div class="cube-face top"></div>
+                            <div class="cube-face bottom"></div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Carousel Cards -->
-                <div class="carousel">
-                    <div class="card" data-angle="0">
-                        <div class="card-inner">
-                            <div class="card-content">
-                                <div class="card-image">
-                                    <img src="/pfp/punisher.jpg" alt="Punisher530_">
+                    <!-- Outer Carousel Container -->
+                    <div class="outer-carousel">
+                        <!-- Group 1: Existing Cards -->
+                        <div class="carousel" data-group-index="0">
+                            <div class="card" data-angle="0">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/pfp/punisher.jpg" alt="Punisher530_">
+                                        </div>
+                                        <h3>@Punisher530_</h3>
+                                        <p>Magic 8 ball (cube) app</p>
+                                        <a href="https://www.anticontainmentsystem.fun/" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
                                 </div>
-                                <h3>@Punisher530_</h3>
-                                <p>Magic 8 ball (cube) app</p>
-                                <a href="https://www.anticontainmentsystem.fun/" target="_blank" class="card-link">Visit Project</a>
+                            </div>
+
+                            <div class="card" data-angle="60">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 1">
+                                        </div>
+                                        <h3>@Placeholder1</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" data-angle="120">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/pfp/haaker.jpg" alt="HaakerMF">
+                                        </div>
+                                        <h3>@HaakerMF</h3>
+                                        <p>Pump.fun page</p>
+                                        <a href="https://pump.fun/coin/G2mKNjuB9UCQNzCpVziqQqFbTyKFLfAuzggdsPaipump" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" data-angle="180">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 2">
+                                        </div>
+                                        <h3>@Placeholder2</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" data-angle="240">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/pfp/pumpradio.jpg" alt="pumpradiotoken">
+                                        </div>
+                                        <h3>@pumpradiotoken</h3>
+                                        <p>Pump.fun page</p>
+                                        <a href="https://pump.fun/coin/5Ds4L5uhoqtkRhTi6n77KYWBdNEpQG5ZUi4uG3yjpump" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" data-angle="300">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 3">
+                                        </div>
+                                        <h3>@Placeholder3</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Group 2: Placeholder Cards -->
+                        <div class="carousel" data-group-index="1">
+                            <div class="card" data-angle="0">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 4">
+                                        </div>
+                                        <h3>@Placeholder4</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="60">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 5">
+                                        </div>
+                                        <h3>@Placeholder5</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="120">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 6">
+                                        </div>
+                                        <h3>@Placeholder6</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="180">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 7">
+                                        </div>
+                                        <h3>@Placeholder7</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="240">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 8">
+                                        </div>
+                                        <h3>@Placeholder8</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="300">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 9">
+                                        </div>
+                                        <h3>@Placeholder9</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Group 3: Placeholder Cards -->
+                        <div class="carousel" data-group-index="2">
+                            <div class="card" data-angle="0">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 10">
+                                        </div>
+                                        <h3>@Placeholder10</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="60">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 11">
+                                        </div>
+                                        <h3>@Placeholder11</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="120">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 12">
+                                        </div>
+                                        <h3>@Placeholder12</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="180">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 13">
+                                        </div>
+                                        <h3>@Placeholder13</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="240">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 14">
+                                        </div>
+                                        <h3>@Placeholder14</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" data-angle="300">
+                                <div class="card-inner">
+                                    <div class="card-content">
+                                        <div class="card-image">
+                                            <img src="https://anticontainmentsystem.com/image/TransLogo.png" alt="Placeholder 15">
+                                        </div>
+                                        <h3>@Placeholder15</h3>
+                                        <p>Coming soon...</p>
+                                        <a href="#" target="_blank" class="card-link">Visit Project</a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card" data-angle="60">
-                        <div class="card-inner">
-                            <div class="card-content">
-                                <div class="card-image">
-                                    <img src="https://dev-nightperson.github.io/anticontainment-system/shortloop.gif" alt="Placeholder 1">
-                                </div>
-                                <h3>@Placeholder1</h3>
-                                <p>Coming soon...</p>
-                                <a href="#" target="_blank" class="card-link">Visit Project</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" data-angle="120">
-                        <div class="card-inner">
-                            <div class="card-content">
-                                <div class="card-image">
-                                    <img src="/pfp/haaker.jpg" alt="HaakerMF">
-                                </div>
-                                <h3>@HaakerMF</h3>
-                                <p>Pump.fun page</p>
-                                <a href="https://pump.fun/coin/G2mKNjuB9UCQNzCpVziqQqFbTyKFLfAuzggdsPaipump" target="_blank" class="card-link">Visit Project</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" data-angle="180">
-                        <div class="card-inner">
-                            <div class="card-content">
-                                <div class="card-image">
-                                    <img src="https://dev-nightperson.github.io/anticontainment-system/shortloop.gif" alt="Placeholder 2">
-                                </div>
-                                <h3>@Placeholder2</h3>
-                                <p>Coming soon...</p>
-                                <a href="#" target="_blank" class="card-link">Visit Project</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" data-angle="240">
-                        <div class="card-inner">
-                            <div class="card-content">
-                                <div class="card-image">
-                                    <img src="/pfp/pumpradio.jpg" alt="pumpradiotoken">
-                                </div>
-                                <h3>@pumpradiotoken</h3>
-                                <p>Pump.fun page</p>
-                                <a href="https://pump.fun/coin/5Ds4L5uhoqtkRhTi6n77KYWBdNEpQG5ZUi4uG3yjpump" target="_blank" class="card-link">Visit Project</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" data-angle="300">
-                        <div class="card-inner">
-                            <div class="card-content">
-                                <div class="card-image">
-                                    <img src="https://dev-nightperson.github.io/anticontainment-system/shortloop.gif" alt="Placeholder 3">
-                                </div>
-                                <h3>@Placeholder3</h3>
-                                <p>Coming soon...</p>
-                                <a href="#" target="_blank" class="card-link">Visit Project</a>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Carousel Navigation Arrows -->
+                    <button class="carousel-arrow left-arrow">&#x2B9C;</button>
+                    <button class="carousel-arrow right-arrow">&#x2B9E;</button>
                 </div>
             </div>
         </section>
@@ -154,7 +319,7 @@
                         <h3>Resources</h3>
                         <ul>
                             <li><a href="index.html">Main Site</a></li>
-                            <li><a href="https://medium.com/@anticontainment.system/about" target="_blank">About NINETENTWO</a></li>
+                            <li><a href="https://medium.com/@anticontainmentsystem.com/about" target="_blank">About NINETENTWO</a></li>
                         </ul>
                     </div>
                 </div>
