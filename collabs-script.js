@@ -1,8 +1,67 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Global Modal Background Effects Logic ---
+    let openModalCount = 0;
+    const globalModalBackgroundEffects = document.getElementById('modal-global-effects');
+
+    const activateGlobalBackground = () => {
+        openModalCount++;
+        if (openModalCount === 1 && globalModalBackgroundEffects) {
+            globalModalBackgroundEffects.classList.add('is-active');
+        }
+    };
+
+    const deactivateGlobalBackground = () => {
+        openModalCount--;
+        if (openModalCount <= 0 && globalModalBackgroundEffects) {
+            openModalCount = 0; // Ensure it doesn't go negative
+            globalModalBackgroundEffects.classList.remove('is-active');
+        }
+    };
+
+    // Function to create and animate light streaks for global background effects
+    function createLightStreaks(numStreaks = 30) { // Default 30 streaks
+        const streakContainer = document.querySelector('#modal-global-effects .streak-container');
+        if (!streakContainer) return;
+
+        // Clear existing streaks if any, to prevent duplicates on re-initialization
+        streakContainer.innerHTML = '';
+
+        for (let i = 0; i < numStreaks; i++) {
+            const streak = document.createElement('div');
+            streak.classList.add('light-streak');
+
+            const randomAngle = Math.random() * 360; // Random angle for each streak (0-360 degrees)
+            const randomDelay = Math.random() * 5; // Random start delay up to 5 seconds
+            const randomDuration = Math.random() * 3 + 3; // Random duration between 3 and 6 seconds
+            const randomWidth = Math.random() * 4 + 2; // Random width between 2px and 6px
+            const randomHeight = Math.random() * 100 + 100; // Random height for length between 100vmin and 200vmin
+
+            streak.style.setProperty('--random-angle', `${randomAngle}deg`);
+            streak.style.setProperty('--streak-delay', `${randomDelay}s`);
+            streak.style.setProperty('--streak-duration', `${randomDuration}s`);
+            streak.style.setProperty('--streak-width', `${randomWidth}px`);
+            streak.style.setProperty('--streak-height', `${randomHeight}vmin`);
+
+            streakContainer.appendChild(streak);
+        }
+    }
+
+    // Call createLightStreaks once on DOMContentLoaded
+    createLightStreaks(25); // Set a specific number of streaks for collabs page
+
     // Back button functionality
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
+            // Before navigating, ensure all modals on THIS page are closed and reset background counter
+            if (collabsModal && collabsModal.classList.contains('is-open')) {
+                closeModal(); // Call collabsModal's close function
+            }
+            // Reset modal count for next page load
+            openModalCount = 0; 
+            if (globalModalBackgroundEffects) {
+                globalModalBackgroundEffects.classList.remove('is-active');
+            }
             window.location.href = 'index.html';
         });
     }
@@ -307,8 +366,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const openModal = () => {
             populateActiveProjects();
             collabsModal.classList.add('is-open');
+            activateGlobalBackground(); // Activate global background
         };
-        const closeModal = () => collabsModal.classList.remove('is-open');
+        const closeModal = () => {
+            collabsModal.classList.remove('is-open');
+            deactivateGlobalBackground(); // Deactivate global background
+        };
 
         moreCollabsLink.addEventListener('click', (e) => {
             e.preventDefault();

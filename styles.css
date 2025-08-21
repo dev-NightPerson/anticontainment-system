@@ -448,6 +448,35 @@ html, body {
     scrollbar-color: #333 #000;
 }
 
+/* Base Modal Scrollbar (bronze) */
+.modal-content::-webkit-scrollbar {
+    width: 12px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: rgba(16, 16, 16, 0.8);
+    border-radius: 6px;
+    border: 2px solid rgba(1, 1, 1, 0.9);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #cd7f32;
+    border-radius: 6px;
+    border: 2px solid rgba(16, 16, 16, 0.8);
+    box-shadow: inset 0 0 6px rgba(205, 127, 50, 0.3);
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #e6a861;
+    box-shadow: inset 0 0 6px rgba(230, 168, 97, 0.4);
+}
+
+/* Firefox scrollbar styling for modal */
+.modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: #cd7f32 rgba(16, 16, 16, 0.8);
+}
+
 /* Top Left Controls Container */
 .top-left-controls {
     position: fixed;
@@ -616,8 +645,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .modal-content {
@@ -814,10 +842,8 @@ html, body {
     transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
-}
-
-#system-modal.is-open .system-modal-content {
-    transform: scale(1) translateY(0);
+    /* Ensure system modal content can scroll */
+    overflow-y: auto; 
 }
 
 .system-modal-grid {
@@ -905,7 +931,6 @@ html, body {
     background: #e6a861; /* Lighter bronze on hover */
 }
 
-
 .system-panel.tr-panel::-webkit-scrollbar {
     /* For right panels, scrollbar on right */
     width: 6px;
@@ -926,7 +951,7 @@ html, body {
 /* Firefox scrollbar styling for system modal panels */
 .system-panel {
     scrollbar-width: thin;
-    scrollbar-color: #cd7f32 #0a0a0a; /* Bronze thumb, dark track */
+    scrollbar-color: #cd7f32 rgba(16, 16, 16, 0.8);
 }
 
 /* New style for sub-titles within info display */
@@ -1053,10 +1078,6 @@ html, body {
 
 /* Specific styles for the new embed modal */
 .new-modal-content {
-    position: relative;
-    background: #010101;
-    border: 2px solid #cd7f32;
-    border-radius: 8px;
     padding: 2.5rem; 
     width: 90%; /* Responsive width, will adapt to content if larger */
     max-width: 900px; /* Increased max-width to allow for the embed + padding on large screens */
@@ -1084,26 +1105,179 @@ html, body {
 /* Ensure the embed container has enough space */
 .new-modal-content .modal-body {
     width: 100%;
-    height: 100%;
+    flex-grow: 1; /* Allow modal-body to take up available space vertically */
     overflow: hidden; /* Hide scrollbars if embed generates its own */
     display: flex; /* Add flexbox to center content */
     justify-content: center; /* Center horizontally */
     align-items: center; /* Center vertically */
-    flex-grow: 1; /* Allow modal-body to grow and take available space */
 }
 
-/* Style the specific embed container element */
+/* Styling for the Pickaxe embed container */
 #deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0 {
-    /* Set preferred max dimensions, allowing it to shrink responsively.
-       This is key to allowing the embed to show "at its max size" when space allows,
-       but still be responsive on smaller screens. */
-    max-width: 700px; /* Preferred maximum width for desktop */
-    max-height: 500px; /* Preferred maximum height for desktop */
-    width: 100%; /* Always try to fill 100% of parent width, up to max-width */
-    height: auto; /* Let height adjust proportionally to maintain aspect ratio */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    width: 100%; /* Take full width of its parent up to max-width */
+    max-width: 700px; /* Max width as per user's request */
+    height: auto; /* Allow the embed to dictate its own height */
+    margin: auto; /* Ensure it's centered within the flex container */
+    background-color: #010101; /* A solid background to ensure it's not transparent through to modal background */
+    border: 1px solid #cd7f32; /* A border to clearly define its area */
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.5); /* A subtle glow */
 }
 
+/* MODAL GLOBAL EFFECTS */
+#modal-global-effects {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999; /* Behind modals (10000), but above general content */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    overflow: hidden; /* Hide streaks outside of view */
+    /* Background for the overall effect area, slightly darker */
+    background: radial-gradient(circle at center, transparent 0%, rgba(1, 1, 1, 0.3) 70%, rgba(1, 1, 1, 0.7) 100%);
+}
+
+#modal-global-effects.is-active {
+    opacity: 1;
+    pointer-events: auto; /* Allow interaction if needed, though for visual it's fine */
+}
+
+.glow-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180vmin; /* Larger for more visual impact */
+    height: 180vmin;
+    /* More complex, moving bronze gradient */
+    background: conic-gradient(from 0deg at 50% 50%, 
+                transparent 0%, 
+                rgba(205, 127, 50, 0.5) 10%, /* Soft bronze, increased opacity */
+                rgba(230, 168, 97, 0.7) 20%, /* Brighter bronze, increased opacity */
+                rgba(205, 127, 50, 0.5) 30%,
+                transparent 40%,
+                transparent 60%,
+                rgba(205, 127, 50, 0.5) 70%,
+                rgba(230, 168, 97, 0.7) 80%,
+                rgba(205, 127, 50, 0.5) 90%,
+                transparent 100%
+                );
+    border-radius: 50%;
+    filter: blur(150px); /* Increased blur for a very soft, expansive glow */
+    transform: translate(-50%, -50%) rotate(0deg); /* Initial state for rotation */
+    animation: rotateGlow 20s infinite linear, pulseGlow 5s infinite alternate ease-in-out; /* Combined animations */
+    will-change: transform, opacity;
+}
+
+@keyframes rotateGlow {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes pulseGlow {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+.streak-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.light-streak {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: linear-gradient(to right, transparent, rgba(255, 200, 150, 1.0), rgba(205, 127, 50, 0.8), transparent); /* Richer bronze gradient, increased opacity */
+    width: var(--streak-width, 4px); /* Variable width from JS */
+    height: var(--streak-height, 150vmin); /* Variable height from JS, ensure it's long */
+    transform-origin: center center;
+    opacity: 0;
+    animation: streakShoot var(--streak-duration, 3s) infinite linear var(--streak-delay, 0s);
+    will-change: transform, opacity;
+    border-radius: 2px; /* Slightly rounded edges */
+}
+
+@keyframes streakShoot {
+    0% {
+        transform: translate(-50%, -50%) rotate(var(--random-angle, 0deg)) scaleY(0.1);
+        opacity: 0;
+    }
+    10% {
+        transform: translate(-50%, -50%) rotate(var(--random-angle, 0deg)) scaleY(1);
+        opacity: 1; /* Increased max opacity */
+    }
+    50% {
+        transform: translate(-50%, -50%) rotate(var(--random-angle, 0deg)) scaleY(0.8);
+        opacity: 0.7; /* Increased mid-point opacity */
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(var(--random-angle, 0deg)) scaleY(0.1);
+        opacity: 0;
+    }
+}
+
+/* Image Lightbox Styles */
+#image-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001; /* Higher than other modals */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#image-lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.image-lightbox-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+}
+
+.image-lightbox-content {
+    position: relative;
+    width: 90vw;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Ensure image doesn't spill */
+}
+
+.image-lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border: 2px solid #cd7f32;
+    box-shadow: 0 0 25px rgba(205, 127, 50, 0.6);
+    transform: scale(0.9);
+    transition: transform 0.3s ease-out;
+}
+
+#image-lightbox.is-open .image-lightbox-img {
+    transform: scale(1);
+}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -1285,73 +1459,20 @@ html, body {
         min-height: unset;
     }
 
-    /* Override the specific embed container element for mobile */
-    #deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0 {
-        max-width: 100%; /* On mobile, let it take full width of the modal-body */
-        max-height: 100%; /* On mobile, let it take full height */
-        /* width: 100%; height: auto; are already set globally and apply */
-    }
-}
-
-/* Image Lightbox Styles */
-#image-lightbox {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10001; /* Higher than other modals */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-#image-lightbox.is-open {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.image-lightbox-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    cursor: pointer;
-}
-
-.image-lightbox-content {
-    position: relative;
-    width: 90vw;
-    height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden; /* Ensure image doesn't spill */
-}
-
-.image-lightbox-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border: 2px solid #cd7f32;
-    box-shadow: 0 0 25px rgba(205, 127, 50, 0.6);
-    transform: scale(0.9);
-    transition: transform 0.3s ease-out;
-}
-
-#image-lightbox.is-open .image-lightbox-img {
-    transform: scale(1);
-}
-
-@media (max-width: 768px) {
     .image-lightbox-content {
         width: 95vw;
         height: 95vh;
+    }
+
+    /* Modal Global Effects adjustments for mobile */
+    .glow-effect {
+        width: 200vmin; /* Even larger for more impact on mobile */
+        height: 200vmin;
+        filter: blur(80px); /* Adjust blur for mobile */
+    }
+
+    .light-streak {
+        width: 3px; /* Slightly thinner on mobile */
+        height: 250vmin; /* Even longer for smaller screens */
     }
 }

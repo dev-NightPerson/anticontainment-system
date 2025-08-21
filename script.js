@@ -1,4 +1,54 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Global Modal Background Effects Logic ---
+    let openModalCount = 0;
+    const globalModalBackgroundEffects = document.getElementById('modal-global-effects');
+
+    const activateGlobalBackground = () => {
+        openModalCount++;
+        if (openModalCount === 1 && globalModalBackgroundEffects) {
+            globalModalBackgroundEffects.classList.add('is-active');
+        }
+    };
+
+    const deactivateGlobalBackground = () => {
+        openModalCount--;
+        if (openModalCount <= 0 && globalModalBackgroundEffects) {
+            openModalCount = 0; // Ensure it doesn't go negative
+            globalModalBackgroundEffects.classList.remove('is-active');
+        }
+    };
+
+    // Function to create and animate light streaks for global background effects
+    function createLightStreaks(numStreaks = 30) { // Default 30 streaks
+        const streakContainer = document.querySelector('#modal-global-effects .streak-container');
+        if (!streakContainer) return;
+
+        // Clear existing streaks if any, to prevent duplicates on re-initialization
+        streakContainer.innerHTML = '';
+
+        for (let i = 0; i < numStreaks; i++) {
+            const streak = document.createElement('div');
+            streak.classList.add('light-streak');
+
+            const randomAngle = Math.random() * 360; // Random angle for each streak (0-360 degrees)
+            const randomDelay = Math.random() * 5; // Random start delay up to 5 seconds
+            const randomDuration = Math.random() * 3 + 3; // Random duration between 3 and 6 seconds
+            const randomWidth = Math.random() * 4 + 2; // Random width between 2px and 6px
+            const randomHeight = Math.random() * 100 + 100; // Random height for length between 100vmin and 200vmin
+
+            streak.style.setProperty('--random-angle', `${randomAngle}deg`);
+            streak.style.setProperty('--streak-delay', `${randomDelay}s`);
+            streak.style.setProperty('--streak-duration', `${randomDuration}s`);
+            streak.style.setProperty('--streak-width', `${randomWidth}px`);
+            streak.style.setProperty('--streak-height', `${randomHeight}vmin`);
+
+            streakContainer.appendChild(streak);
+        }
+    }
+
+    // Call createLightStreaks once on DOMContentLoaded
+    createLightStreaks(30); // Set a specific number of streaks for index page
+
     // --- System Modal Logic ---
     const systemBtn = document.getElementById('system-btn');
     const systemModal = document.getElementById('system-modal');
@@ -272,13 +322,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const openSystemModal = () => {
         systemModal.classList.add('is-open');
+        activateGlobalBackground(); // Activate global background
         // Set initial content for info display
         if (infoDisplay && panelLinks.length > 0) {
             // Simulate click on the first link to load default content
             panelLinks[0].click(); 
         }
     };
-    const closeSystemModal = () => systemModal.classList.remove('is-open');
+    const closeSystemModal = () => {
+        systemModal.classList.remove('is-open');
+        deactivateGlobalBackground(); // Deactivate global background
+    };
 
     if (systemBtn) {
         systemBtn.addEventListener('click', openSystemModal);
@@ -331,6 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (imageLightboxImg) {
             imageLightboxImg.src = src;
             imageLightbox.classList.add('is-open');
+            activateGlobalBackground(); // Activate global background
         }
     };
 
@@ -341,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (imageLightboxImg) {
                 imageLightboxImg.src = '';
             }
+            deactivateGlobalBackground(); // Deactivate global background
         }
     };
 
@@ -371,8 +427,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const updatesModalCloseBtn = updatesModal.querySelector('.modal-close-btn');
         const updatesModalOverlay = updatesModal.querySelector('.modal-overlay');
 
-        const openUpdatesModal = () => updatesModal.classList.add('is-open');
-        const closeUpdatesModal = () => updatesModal.classList.remove('is-open');
+        const openUpdatesModal = () => {
+            updatesModal.classList.add('is-open');
+            activateGlobalBackground(); // Activate global background
+        };
+        const closeUpdatesModal = () => {
+            updatesModal.classList.remove('is-open');
+            deactivateGlobalBackground(); // Deactivate global background
+        };
 
         updatesBtn.addEventListener('click', () => {
             if (systemModal && systemModal.classList.contains('is-open')) {
@@ -398,14 +460,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const collabsBtn = document.getElementById('collabs-btn'); // Now inside system modal
     if (collabsBtn) {
         collabsBtn.addEventListener('click', () => {
+            // Before navigating, ensure all modals on THIS page are closed and reset background counter
             if (systemModal && systemModal.classList.contains('is-open')) {
-                closeSystemModal(); // Close system modal first
+                closeSystemModal();
             }
-            if (updatesModal && updatesModal.classList.contains('is-open')) { // Close updates modal if open
+            if (updatesModal && updatesModal.classList.contains('is-open')) {
                 closeUpdatesModal();
             }
-            if (newModal && newModal.classList.contains('is-open')) { // Close new modal if open
+            if (newModal && newModal.classList.contains('is-open')) {
                 closeNewModal();
+            }
+            if (imageLightbox && imageLightbox.classList.contains('is-open')) {
+                closeImageLightbox();
+            }
+            // Reset modal count for next page load
+            openModalCount = 0; 
+            if (globalModalBackgroundEffects) {
+                globalModalBackgroundEffects.classList.remove('is-active');
             }
             window.location.href = 'collabs.html'; // Then navigate
         });
@@ -419,8 +490,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const newModalCloseBtn = newModal.querySelector('.modal-close-btn');
         const newModalOverlay = newModal.querySelector('.modal-overlay');
 
-        const openNewModal = () => newModal.classList.add('is-open');
-        const closeNewModal = () => newModal.classList.remove('is-open');
+        const openNewModal = () => {
+            newModal.classList.add('is-open');
+            activateGlobalBackground(); // Activate global background
+        };
+        const closeNewModal = () => {
+            newModal.classList.remove('is-open');
+            deactivateGlobalBackground(); // Deactivate global background
+        };
 
         newModalBtn.addEventListener('click', () => {
             // Close other modals if open
