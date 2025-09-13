@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>$YSTEM Holder Checker · ANTICONTAINMENT SYSTEM</title>
+  <style>
+    /* Minimal reset and base setup (inspiration only) */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; }
+    html, body { overflow-x: hidden; }
+    :root {
+      --bg: #0e0c0a; /* deep charcoal with bronze vibe */
+      --card:#14110f; /* flat dark surface */
+      --muted:#b8a08a; /* desaturated bronze */
+      --primary:#cd7f32; /* bronze */
+      --txt:#f2efe9;
+      --ok:#8bc34a; --warn:#f0b74a; --err:#ff5a4f; --accent:#d3a268; /* bronze accent */
+    }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--txt); }
+    /* Subtle rotating conic-bronze glow */
+    body::before { content:""; position:fixed; inset:-20vmin; z-index:-1; pointer-events:none;
+      background: conic-gradient(from 0deg at 50% 50%, transparent 0%, rgba(205,127,50,0.12) 8%, rgba(230,168,97,0.16) 16%, transparent 24%, transparent 60%, rgba(205,127,50,0.12) 72%, rgba(230,168,97,0.16) 84%, transparent 92%);
+      filter: blur(90px); animation: spinGlow 28s linear infinite; }
+    @keyframes spinGlow { to { transform: rotate(360deg); } }
+    .wrap { max-width: 640px; margin: 24px auto; padding: 12px; }
+    /* Frosted glass card: semi-transparent background + backdrop blur */
+    .card { background: rgba(20,17,15,0.60); border: 1px solid rgba(205,127,50,.35); border-radius: 0; box-shadow: none; overflow:hidden; backdrop-filter: blur(8px) saturate(1.15); -webkit-backdrop-filter: blur(8px) saturate(1.15); }
+    header { padding: 12px 16px; border-bottom: 1px solid rgba(205,127,50,.35); display:flex; align-items:center; gap:10px; }
+    .logo { width:26px; height:26px; border-radius:0; background: var(--primary); box-shadow: none; }
+    h1 { font-size: 16px; margin:0; letter-spacing: .3px; font-weight: 800; }
+    .sub { color: var(--muted); font-size: 11px; margin:2px 0 0 0; }
+    main { padding: 16px; display:grid; gap:12px; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    label { font-size:11px; color:var(--muted); text-transform: uppercase; letter-spacing:.4px; }
+    input[type=text] { flex:1 1 420px; background:#15120f; border:1px solid rgba(205,127,50,.35); color:var(--txt); padding:8px 10px; border-radius:0; outline:none; font-size:13px; }
+    input[type=text]:focus { border-color: var(--accent); box-shadow: none; }
+    .btn { cursor:pointer; appearance:none; background: #171411; color:var(--txt); border:1px solid rgba(205,127,50,.5); border-radius:0; padding:8px 12px; font-weight:700; font-size:13px; letter-spacing:.3px; transition: background-color .12s ease, border-color .12s ease, color .12s ease; }
+    .btn:hover { border-color: var(--primary); background:#1e1a16; }
+    .btn:active { transform: none; }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color:#0b0a09; text-shadow: none; }
+    .pill { display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(205,127,50,.35); padding:4px 8px; border-radius:0; background:#171411; color:var(--muted); font-size:11px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .result { background:#15120f; border:1px solid rgba(205,127,50,.35); border-radius:0; padding:10px; }
+    .amt { font-size: 24px; font-weight: 800; letter-spacing: .3px; }
+    .muted { color: var(--muted); }
+    .status { font-size:11px; color: var(--muted); }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .err { color: var(--err); }
+    footer { padding: 10px 14px; border-top: 1px solid rgba(205,127,50,.35); display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:11px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Fixed top-right info (mint + copy) */
+    .top-right-info { position:fixed; top:12px; right:12px; z-index:1000; display:flex; align-items:center; gap:8px; background: rgba(10,9,8,0.75); border:1px solid rgba(205,127,50,.45); padding:6px 8px; border-radius:0; backdrop-filter: blur(2px); }
+    .ca-text { color: var(--accent); font-size: 11px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #copy-ca-btn { padding:4px 8px; font-size:11px; line-height:1; border-color: rgba(205,127,50,.6); background:#171411; }
+    #copy-ca-btn:hover { background:#1e1a16; border-color: var(--primary); }
+    #copy-feedback { position:absolute; top:100%; right:0; transform: translateY(6px); background: var(--primary); color:#0b0a09; padding:4px 6px; border:1px solid rgba(205,127,50,.6); border-radius:0; font-size:10px; opacity:0; pointer-events:none; transition: opacity .2s ease; }
+    #copy-feedback.show { opacity:1; }
+
+    /* Animated brass lines overlay (performance-tuned) */
+    .brass-lines-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; contain: strict; transform: translateZ(0); will-change: transform; }
+    .brass-line { position: absolute; opacity: 0.28; will-change: transform; backface-visibility: hidden; }
+    /* Use gradients with transparent edges to avoid expensive blend modes */
+    .brass-line.horizontal {
+      height: 120px;
+      width: var(--length, 40vw);
+      left: -120px;
+      top: var(--position, 50%);
+      background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(205,127,50,.35) 25%, rgba(230,168,97,.45) 50%, rgba(205,127,50,.35) 75%, rgba(0,0,0,0) 100%);
+      animation: moveHorizontal var(--duration, 18s) linear infinite both;
+    }
+    .brass-line.vertical {
+      width: 120px;
+      height: var(--length, 40vh);
+      top: -120px;
+      left: var(--position, 50%);
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(205,127,50,.35) 25%, rgba(230,168,97,.45) 50%, rgba(205,127,50,.35) 75%, rgba(0,0,0,0) 100%);
+      animation: moveVertical var(--duration, 22s) linear infinite both;
+    }
+
+    @keyframes moveHorizontal {
+      from { transform: translate3d(-240px, 0, 0); }
+      to   { transform: translate3d(calc(100vw + 240px), 0, 0); }
+    }
+    @keyframes moveHorizontalReverse {
+      from { transform: translate3d(calc(100vw + 240px), 0, 0); }
+      to   { transform: translate3d(-240px, 0, 0); }
+    }
+    @keyframes moveVertical {
+      from { transform: translate3d(0, calc(100vh + 240px), 0); }
+      to   { transform: translate3d(0, -240px, 0); }
+    }
+    @keyframes moveVerticalReverse {
+      from { transform: translate3d(0, -240px, 0); }
+      to   { transform: translate3d(0, calc(100vh + 240px), 0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>$YSTEM Holder Checker</h1>
+          <p class="sub">Checks a connected Solana wallet for YSTEM and shows the holder's balance.</p>
+        </div>
+      </header>
+      <main>
+        <div class="row">
+          <div class="pill"><span>Token:</span><span class="mono">YSTEM</span></div>
+          <div class="pill" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump"><span>Mint:</span><span class="mono" id="mintFixed">2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump</span></div>
+          <button id="btn-connect" class="btn primary">Connect Wallet</button>
+          <button id="btn-check" class="btn">Check Balance</button>
+        </div>
+
+        <div class="row" style="justify-content:space-between;">
+          <div class="pill"><span>Network:</span><span class="mono" id="net">mainnet-beta</span></div>
+          <div class="pill"><span>Wallet:</span><span class="mono" id="walletLabel">Not connected</span></div>
+        </div>
+
+        <div class="result" id="result">
+          <div class="status">Status: <span id="status">Waiting for wallet…</span></div>
+          <div style="margin-top:8px;">
+            <div class="muted">YSTEM Balance</div>
+            <div class="amt" id="amount">—</div>
+            <div class="muted" id="raw" style="font-size:12px; margin-top:6px;"></div>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <div>ANTICONTAINMENT SYSTEM · Hold. Conquer. Ascend.</div>
+        <div><a href="https://pump.fun/coin/2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump" target="_blank" rel="noopener">catch the stream</a></div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Fixed top-right info (mint + copy) -->
+  <div class="top-right-info">
+    <span class="ca-text mono" id="caText" title="Token mint"></span>
+    <button id="copy-ca-btn" class="btn" aria-label="Copy mint">Copy</button>
+    <div id="copy-feedback">Copied</div>
+  </div>
+
+  <!-- Brass lines overlay -->
+  <div class="brass-lines-container" id="brassLines" aria-hidden="true"></div>
+
+  <!-- Solana web3.js (IIFE build) -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+
+  <script>
+    (function(){
+      const { Connection, clusterApiUrl, PublicKey } = solanaWeb3;
+      const urlRpc = new URLSearchParams(location.search).get('rpc');
+      const HELIUS_RPC = 'https://mainnet.helius-rpc.com/?api-key=45e049e6-8704-44f5-ad2d-916c5a8dd845';
+      const RPC = urlRpc || HELIUS_RPC; // override via ?rpc=...
+      const connection = new Connection(RPC, 'confirmed');
+      // Show which RPC host is being used in the UI
+      try {
+        const host = new URL(RPC).host || 'custom RPC';
+        const netEl = document.getElementById('net');
+        if (netEl) netEl.textContent = `mainnet-beta · ${host}`;
+      } catch {}
+
+      const $ = (id)=>document.getElementById(id);
+      const status = (msg, cls) => {
+        const el = $('status');
+        el.textContent = msg;
+        el.className = cls || '';
+      };
+
+      const btnConnect = $('btn-connect');
+      const btnCheck = $('btn-check');
+      const walletLabel = $('walletLabel');
+      const amountEl = $('amount');
+      const rawEl = $('raw');
+      const mintFixed = $('mintFixed');
+
+      let provider = null; // Phantom or any Wallet Standard provider exposing window.solana
+      let pubkey = null;
+      const YSTEM_MINT_STR = '2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump';
+
+      function detectProvider(){
+        if (window.phantom?.solana) return window.phantom.solana; // newer Phantom
+        if (window.solana?.isPhantom) return window.solana;       // legacy Phantom
+        return window.solana || null;                              // any Wallet Standard impl
+      }
+
+      async function connect(){
+        try {
+          provider = detectProvider();
+          if (!provider) {
+            status('No Solana wallet detected. Please install Phantom.', 'warn');
+            window.open('https://phantom.app/', '_blank');
+            return;
+          }
+          const res = await provider.connect();
+          pubkey = res.publicKey || provider.publicKey;
+          walletLabel.textContent = pubkey?.toString() || 'Unknown';
+          status('Wallet connected. Ready to check balance.', 'ok');
+          // Auto-check balance on successful connect for better UX
+          checkBalance();
+        } catch (e) {
+          console.error(e);
+          status('Wallet connection rejected or failed.', 'err');
+        }
+      }
+
+      async function checkBalance(){
+        try {
+          if (!pubkey) { status('Connect your wallet first.', 'warn'); return; }
+          let mint;
+          try {
+            mint = new PublicKey(YSTEM_MINT_STR);
+          } catch (e) {
+            status('Configured token mint is invalid. Please update the app with a valid mint.', 'err');
+            return;
+          }
+
+          status('Querying token accounts…');
+          // Use parsed accounts so we don’t have to deserialize SPL layouts manually
+          const resp = await connection.getParsedTokenAccountsByOwner(pubkey, { mint });
+          const accounts = resp.value || [];
+
+          if (accounts.length === 0) {
+            amountEl.textContent = '0.000000';
+            rawEl.textContent = 'No associated token accounts for this mint.';
+            status('No balance found for this token.', 'warn');
+            return;
+          }
+
+          // Sum raw amounts safely
+          let totalAmount = 0n;
+          let decimals = 0;
+          for (const { account } of accounts) {
+            const info = account.data.parsed.info;
+            const amtStr = info.tokenAmount.amount; // raw as string
+            const dec = info.tokenAmount.decimals;
+            decimals = dec; // all accounts of same mint share decimals
+            totalAmount += BigInt(amtStr);
+          }
+
+          // Format with decimals → string
+          const human = formatWithDecimals(totalAmount, decimals);
+          amountEl.textContent = human;
+          rawEl.textContent = `Raw: ${totalAmount.toString()} (decimals=${decimals})`;
+          status('Balance fetched successfully.', 'ok');
+        } catch (e) {
+          console.error(e);
+          const msg = (e && e.message) ? e.message : String(e);
+          status(`Failed to fetch balance: ${msg}`, 'err');
+        }
+      }
+
+      function formatWithDecimals(amountBigInt, decimals){
+        const s = amountBigInt.toString().padStart(decimals + 1, '0');
+        const int = s.slice(0, -decimals) || '0';
+        const frac = s.slice(-decimals);
+        // Trim trailing zeros in fractional part but keep at least 2
+        const fracTrim = frac.replace(/0+$/,'');
+        const shownFrac = (fracTrim === '') ? '00' : fracTrim.slice(0, 12); // cap length
+        return Number(int).toLocaleString(undefined) + (shownFrac ? '.' + shownFrac : '');
+      }
+
+      // Listeners
+      btnConnect.addEventListener('click', connect);
+      btnCheck.addEventListener('click', checkBalance);
+
+      // Auto-update if user switches accounts in wallet
+      window.addEventListener('load', () => {
+        provider = detectProvider();
+        if (provider) {
+          provider.on?.('connect', () => { walletLabel.textContent = provider.publicKey?.toString() || 'Connected'; });
+          provider.on?.('disconnect', () => { walletLabel.textContent = 'Not connected'; pubkey = null; status('Wallet disconnected.','warn'); });
+          provider.on?.('accountChanged', (pk) => {
+            pubkey = pk ? new PublicKey(pk.toString()) : null;
+            walletLabel.textContent = pubkey ? pubkey.toString() : 'Not connected';
+            if (pubkey) checkBalance();
+          });
+        }
+
+        // Populate mint text and wire copy
+        const caEl = document.getElementById('caText');
+        const copyBtn = document.getElementById('copy-ca-btn');
+        const copyFb = document.getElementById('copy-feedback');
+        if (caEl) caEl.textContent = YSTEM_MINT_STR;
+        copyBtn?.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(YSTEM_MINT_STR); copyFb?.classList.add('show'); setTimeout(()=>copyFb?.classList.remove('show'), 900); } catch {}
+        });
+
+        // Spawn animated brass lines similar to the example
+        const cont = document.getElementById('brassLines');
+        if (cont) {
+          const rnd = (min,max)=>Math.random()*(max-min)+min;
+          // horizontals
+          for (let i=0;i<8;i++) {
+            const h = document.createElement('div');
+            h.className='brass-line horizontal';
+            const dur = rnd(14,26);
+            h.style.setProperty('--position', `${rnd(5,95)}vh`);
+            h.style.setProperty('--length', `${rnd(20,60)}vw`);
+            h.style.setProperty('--duration', `${dur}s`);
+            // Alternate direction and start mid-cycle with negative delay
+            if (Math.random() < 0.5) h.style.animationName = 'moveHorizontalReverse';
+            h.style.animationDelay = `-${rnd(0,dur).toFixed(2)}s`;
+            cont.appendChild(h);
+          }
+          // verticals
+          for (let i=0;i<6;i++) {
+            const v = document.createElement('div');
+            v.className='brass-line vertical';
+            const dur = rnd(18,30);
+            v.style.setProperty('--position', `${rnd(5,95)}vw`);
+            v.style.setProperty('--length', `${rnd(20,60)}vh`);
+            v.style.setProperty('--duration', `${dur}s`);
+            if (Math.random() < 0.5) v.style.animationName = 'moveVerticalReverse';
+            v.style.animationDelay = `-${rnd(0,dur).toFixed(2)}s`;
+            cont.appendChild(v);
+          }
+          // Kick animations to avoid potential initial paint hang
+          requestAnimationFrame(()=>{ cont.offsetHeight; });
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>
