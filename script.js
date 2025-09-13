@@ -320,11 +320,19 @@ document.addEventListener('DOMContentLoaded', function() {
         `
     };
 
-    const openSystemModal = () => {
+    const openSystemModal = (targetContentId = null) => {
         systemModal.classList.add('is-open');
         activateGlobalBackground(); // Activate global background
-        // Set initial content for info display
-        if (infoDisplay && panelLinks.length > 0) {
+        
+        let targetLink = null;
+        if (targetContentId) {
+            targetLink = systemModal.querySelector(`.panel-link[data-content-id="${targetContentId}"]`);
+        }
+
+        // If a valid target link is found, click it. Otherwise, click the first link as default.
+        if (targetLink) {
+            targetLink.click();
+        } else if (infoDisplay && panelLinks.length > 0) {
             // Simulate click on the first link to load default content
             panelLinks[0].click(); 
         }
@@ -335,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (systemBtn) {
-        systemBtn.addEventListener('click', openSystemModal);
+        systemBtn.addEventListener('click', () => openSystemModal());
     }
     if (systemModalCloseBtn) {
         systemModalCloseBtn.addEventListener('click', closeSystemModal);
@@ -375,6 +383,15 @@ document.addEventListener('DOMContentLoaded', function() {
             closeSystemModal();
         }
     });
+
+    // --- Footer Link to System Modal Logic ---
+    const pressKitFooterLink = document.getElementById('press-kit-footer-link');
+    if (pressKitFooterLink) {
+        pressKitFooterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSystemModal('presskit-data');
+        });
+    }
 
     // --- Image Lightbox Logic ---
     const imageLightbox = document.getElementById('image-lightbox');
