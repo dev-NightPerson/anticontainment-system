@@ -7,18 +7,75 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="top-left-controls">
-        <button id="updates-btn">Updates</button>
-        <button id="collabs-btn">Collabs</button>
+    <div id="modal-global-effects">
+        <div class="glow-effect"></div>
+        <div class="streak-container">
+            <!-- Light streaks will be dynamically generated here by JavaScript -->
+        </div>
     </div>
+    <div class="top-left-controls">
+        <button id="system-btn">System</button>
+        <button id="new-modal-btn">Ask YSTEM</button>
+    </div>
+    <div class="top-right-info">
+        <span class="ca-text" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump">CA: 2pABQ...pump</span>
+        <button id="copy-ca-btn" title="Copy to clipboard">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+        <span id="copy-feedback">Copied!</span>
+    </div>
+
+    <!-- System Modal -->
+    <div id="system-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content system-modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div class="system-modal-grid">
+                <div class="tl-panel system-panel">
+                    <h3>INFORMATION</h3>
+                    <ul class="panel-links-list">
+                        <li><button class="panel-link" data-content-id="tokenomics-data">Tokenomics</button></li>
+                        <li><button class="panel-link" data-content-id="satsurge-data">System Surge Saturday</button></li>
+                        <li class="roadmap-snapshot-row">
+                            <button class="panel-link" data-content-id="roadmap-data">Roadmap</button>
+                            <button class="panel-link snapshot-button" data-content-id="snapshot-data">Snapshot</button>
+                        </li>
+                        <li><button class="panel-link" data-content-id="presskit-data">Press Kit</button></li>
+                    </ul>
+                </div>
+                <div class="tr-panel system-panel">
+                    <div id="info-display" class="panel-content-display">
+                        <p>Select an option from the left to view details.</p>
+                    </div>
+                </div>
+                <div class="bl-panel system-panel">
+                    <h3>LAUNCH</h3>
+                    <div class="panel-buttons">
+                        <button id="collabs-btn" class="system-action-btn">Collabs</button>
+                    </div>
+                </div>
+                <div class="br-panel system-panel">
+                    <h3>TOOLS</h3>
+                    <div class="panel-buttons">
+                        <button id="updates-btn" class="system-action-btn">Updates</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="updates-modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <button class="modal-close-btn">&times;</button>
-            <h2 class="modal-title">System Updates</h2>
+            <h2 class="modal-title">$YSTEM UPDATES</h2>
             <div class="modal-body">
                 <div class="update-column">
                     <h3>Latest Update</h3>
+                    <div class="update-item">
+                        <p class="update-text">First day of trip I was dead tired but still managed to set up the streaming laptop and pick up some tech needed for a smooth experience, Set out my week of shop work and arrange materials for projects I will be undertaking. Finishing off the day coding and updating and checking up on Socials and will be testing out streaming on both mobile and on desktop.</p>
+                        <span class="update-timestamp">August 4, 2025</span>
+                    </div>
                     <div class="update-item">
                         <p class="update-text">Heading to airport and will be livestreaming once I get through the gate and then at the lay over airport and then after I get to the final destination and settled in I will go for a little longer stream.</p>
                         <span class="update-timestamp">August 3, 2025</span>
@@ -36,11 +93,16 @@
                         <span class="update-timestamp">August 1, 2025</span>
                     </div>
                     <div class="update-item">
-                        <p class="update-text"> Buyback & Rewards Wallet 💥 First $YSTEM buyback complete! ~1,500,000 tokens have been purchased by a dedicated Rewards & Giveaways wallet. Buybacks will happen every Friday to strengthen the project and reward the community. 🔁📈</p>
+                        <p class="update-text">Buyback & Rewards Wallet 💥 First $YSTEM buyback complete! ~1,500,000 tokens have been purchased by a dedicated Rewards & Giveaways wallet. Buybacks will happen every Friday to strengthen the project and reward the community. 🔁📈</p>
                         <span class="update-timestamp">August 1, 2025</span>
                     </div>
                     <div class="update-item">
-                        <p class="update-text">Trivia Challenges 🔥 🏁 $YSTEM Trivia Challenge at every market cap milestone: ➡️ 20K MC ➡️ 40K MC ➡️ 60K MC Be the first to answer the trivia question in pump.fun chat and win 500,000 $YSTEM. Stay sharp — rewards fly fast. 🧠💰</p>
+                        <p class="update-text">Trivia Challenges 🔥
+🏁 $YSTEM Trivia Challenge at every market cap milestone:
+➡️ 20K MC
+➡️ 40K MC
+➡️ 60K MC
+Be the first to answer the trivia question in pump.fun chat and win 500,000 $YSTEM. Stay sharp — rewards fly fast. 🧠💰</p>
                         <span class="update-timestamp">August 1, 2025</span>
                     </div>
                     <div class="update-item">
@@ -73,12 +135,24 @@
                 </div>
             </div>
             <div class="modal-footer">
-                 <a href="#" class="footer-link"><span>Link One</span> — Description of this link.</a>
-                 <a href="#" class="footer-link"><span>Link Two</span> — Another useful link here.</a>
-                 <a href="#" class="footer-link"><span>Link Three</span> — And a third one for good measure.</a>
-                 <a href="#" class="footer-link"><span>Link Four</span> — More resources available.</a>
-                 <a href="#" class="footer-link"><span>Link Five</span> — Check out this project.</a>
-                 <a href="https://www.anticontainmentsystem.fun/" class="footer-link"><span>Magic 8 Ball by Punisher</span> — ask the magic 8 ball anything</a>
+                <div class="wallet-info">
+                    <p class="wallet-text">Dev wallet initial buy 9,102,000 $YSTEM (D1RdGs1YqauADk8G3UpwwX6cvb6YoBHzWzU4edqtHVZS)</p>
+                    <p class="wallet-text">Reward/Buy backs/Giveaway wallet (2dnNnkoGJeWkh8zm3urCcYYK26dDHyE8Cu18UHhwoBEc)</p>
+                </div>
+                <a href="https://solscan.io/account/Fc8Ap3RwUXb6A78Zyi4QdmTjF9XjgpwosCjBFcCjtu7X" target="_blank" class="footer-link"><span>Lock until 2nd September 2029</span> — 9,000,000 $YSTEM</a>
+                <a href="https://solscan.io/account/GAdPZrbB5UH3wuJbYAPCA5jR55ECwz2mEMKdySS2g6W2" target="_blank" class="footer-link"><span>Lock until September 1st 2025</span> — 100,000 $YSTEM (re-lock monthly)</a>
+                <a href="https://solscan.io/account/D1RdGs1YqauADk8G3UpwwX6cvb6YoBHzWzU4edqtHVZS" target="_blank" class="footer-link"><span>Dev holdings</span> — 2000 $YSTEM held for development use</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="new-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content new-modal-content">
+            <button class="modal-close-btn">&times;</button>
+            
+            <div class="modal-body">
+                <div id="deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0"></div> <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
             </div>
         </div>
     </div>
@@ -97,7 +171,7 @@
         <section class="banner-section">
             <div class="iframe-container">
                 <iframe 
-                    src="https://continuous-scroller--beautifulbloom.on.websim.com/?v=9" 
+                    src="https://continuous-scroller--beautifulbloom.on.websim.com/?v=22" 
                     class="banner-iframe"
                     frameborder="0"
                     allowfullscreen
@@ -116,7 +190,7 @@
                         <ul>
                             <li><a href="#">About 9102*</a></li>
                             <li><a href="https://medium.com/@anticontainment.system/from-visual-art-ambitions-to-the-sonic-innovations-of-ninetentwo-anticontainment-system-015b6d337968">My Story</a></li>
-                            <li><a href="https://x.com/DevNightperson">Collabs*</a></li>
+                            <li><a href="collabs.html">Collabs</a></li>
                             <li><a href="#">Press Kit*</a></li>
                         </ul>
                     </div>
@@ -132,25 +206,44 @@
                     <div class="footer-column">
                         <h3>Media</h3>
                         <ul>
-                            <li><a href="https://www.youtube.com/@ANTICONTAINMENTSYSTEM">YT $YSTEM</a></li>
-                            <li><a href="https://www.youtube.com/@ninetentwoNTT">YT NTT</a></li>
-                            <li><a href="https://medium.com/@anticontainment.system/about">Medium</a></li>
+                            <li><a href="https://www.youtube.com/@ANTICONTAINMENTSYSTEM" target="_blank">YT $YSTEM</a></li>
+                            <li><a href="https://www.youtube.com/@ninetentwoNTT" target="_blank">YT NTT</a></li>
+                            <li><a href="https://medium.com/@anticontainment.system/about" target="_blank">Medium</a></li>
                             <li><a href="#">Portfolio [planned launch]</a></li>
                             <li><a href="#">Downloads [planned launch]</a></li>
                         </ul>
                     </div>
                     <div class="footer-column">
-                        <h3>Connect</h3>
+                        <div class="connect-header">
+                            <h3>Connect</h3>
+                            <div class="connect-tooltip">
+                                <div class="tooltip-row"><strong>𝕏:</strong> <span>@NinetentwoNTT</span></div>
+                                <div class="tooltip-row"><strong>IG:</strong> <span>@ninetentwo</span></div>
+                                <div class="tooltip-row"><strong>TG:</strong> <span>AnticontainmentPortal</span></div>
+                                <hr class="tooltip-divider">
+                                <div class="tooltip-row"><strong>CA:</strong> <span>2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump</span></div>
+                            </div>
+                        </div>
                         <ul>
-                            <li><a href="https://x.com/NinetentwoNTT">𝕏</a></li>
-                            <li><a href="https://www.instagram.com/ninetentwo">IG</a></li>
-                            <li><a href="https://t.me/AnticontainmentPortal">TG</a></li>
-                            <li><a href="https://x.com/i/communities/1948283127836856671">𝕏 Community 📰</a></li>
+                            <li><a href="https://x.com/NinetentwoNTT" target="_blank">𝕏</a></li>
+                            <li><a href="https://www.instagram.com/ninetentwo" target="_blank">IG</a></li>
+                            <li><a href="https://t.me/AnticontainmentPortal" target="_blank">TG</a></li>
+                            <li><a href="https://x.com/i/communities/1948283127836856671" target="_blank">𝕏 Community 📰</a></li>
+                            <li><a href="https://pump.fun/coin/2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump" target="_blank">PUMP.FUN</a></li>
+                            <li><a href="https://dexscreener.com/solana/9yph933kkmxfsxqnqdysm5a8wuqaxhfq4fdg97vfjxe8" target="_blank">Dexscreener</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- Image Lightbox for Snapshot -->
+    <div id="image-lightbox">
+        <div class="image-lightbox-overlay"></div>
+        <div class="image-lightbox-content">
+            <img src="" alt="Full size image" class="image-lightbox-img">
+        </div>
     </div>
 
     <script src="script.js"></script>
