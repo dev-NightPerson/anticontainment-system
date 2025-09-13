@@ -1,251 +1,372 @@
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico"> <!-- Or /images/favicon.png etc. -->
-    <title>Anticontainment System</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>$YSTEM Holder Checker · ANTICONTAINMENT SYSTEM</title>
+  <style>
+    /* Minimal reset and base setup (inspiration only) */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; }
+    html, body { overflow-x: hidden; }
+    :root {
+      --bg: #0e0c0a; /* deep charcoal with bronze vibe */
+      --card:#14110f; /* flat dark surface */
+      --muted:#b8a08a; /* desaturated bronze */
+      --primary:#cd7f32; /* bronze */
+      --txt:#f2efe9;
+      --ok:#8bc34a; --warn:#f0b74a; --err:#ff5a4f; --accent:#d3a268; /* bronze accent */
+    }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--txt); }
+    /* Subtle rotating conic-bronze glow */
+    body::before { content:""; position:fixed; inset:-20vmin; z-index:-1; pointer-events:none;
+      background: conic-gradient(from 0deg at 50% 50%, transparent 0%, rgba(205,127,50,0.12) 8%, rgba(230,168,97,0.16) 16%, transparent 24%, transparent 60%, rgba(205,127,50,0.12) 72%, rgba(230,168,97,0.16) 84%, transparent 92%);
+      filter: blur(90px); animation: spinGlow 28s linear infinite; }
+    @keyframes spinGlow { to { transform: rotate(360deg); } }
+    .wrap { max-width: 640px; margin: 24px auto; padding: 12px; }
+    /* Frosted glass card: semi-transparent background + stronger backdrop blur */
+    .card { background: rgba(20,17,15,0.45); border: 1px solid rgba(205,127,50,.35); border-radius: 0; box-shadow: none; overflow:hidden; backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); }
+    header { padding: 12px 16px; border-bottom: 1px solid rgba(205,127,50,.35); display:flex; align-items:center; gap:10px; }
+    .logo { width:28px; height:28px; border-radius:0; object-fit: cover; object-position: center; display:block; }
+    h1 { font-size: 16px; margin:0; letter-spacing: .3px; font-weight: 800; }
+    .sub { color: var(--muted); font-size: 11px; margin:2px 0 0 0; }
+    main { padding: 16px; display:grid; gap:12px; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    label { font-size:11px; color:var(--muted); text-transform: uppercase; letter-spacing:.4px; }
+    input[type=text] { flex:1 1 420px; background:#15120f; border:1px solid rgba(205,127,50,.35); color:var(--txt); padding:8px 10px; border-radius:0; outline:none; font-size:13px; }
+    input[type=text]:focus { border-color: var(--accent); box-shadow: none; }
+    .btn { cursor:pointer; appearance:none; background: #171411; color:var(--txt); border:1px solid rgba(205,127,50,.5); border-radius:0; padding:8px 12px; font-weight:700; font-size:13px; letter-spacing:.3px; transition: background-color .12s ease, border-color .12s ease, color .12s ease; }
+    .btn:hover { border-color: var(--primary); background:#1e1a16; }
+    .btn:active { transform: none; }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color:#0b0a09; text-shadow: none; }
+    /* Fancy compact Connect button for header */
+    .btn.connect { margin-left:auto; padding:6px 10px; font-size:12px; letter-spacing:.4px; text-transform: uppercase; background: linear-gradient(180deg, rgba(205,127,50,.95), rgba(180,110,35,.95)); color:#0b0a09; border-color: rgba(255,255,255,.2); box-shadow: 0 0 0 1px rgba(205,127,50,.35) inset, 0 4px 14px rgba(205,127,50,.25); }
+    .btn.connect:hover { background: linear-gradient(180deg, rgba(215,137,60,1), rgba(185,115,40,1)); box-shadow: 0 0 0 1px rgba(205,127,50,.5) inset, 0 6px 18px rgba(205,127,50,.35); }
+    .pill { display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(205,127,50,.35); padding:4px 8px; border-radius:0; background:#171411; color:var(--muted); font-size:11px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .result { background:#15120f; border:1px solid rgba(205,127,50,.35); border-radius:0; padding:10px; }
+    .amt { font-size: 24px; font-weight: 800; letter-spacing: .3px; }
+    .muted { color: var(--muted); }
+    .status { font-size:11px; color: var(--muted); }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .err { color: var(--err); }
+    footer { padding: 10px 14px; border-top: 1px solid rgba(205,127,50,.35); display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:11px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Mobile optimizations */
+    @media (max-width: 600px) {
+      .wrap { max-width: 100%; margin: 12px auto; padding: 8px; }
+      header { padding: 10px 12px; gap:8px; }
+      h1 { font-size: 15px; }
+      .sub { font-size: 10px; }
+      .btn.connect { padding:6px 8px; font-size:11px; }
+      main { padding: 12px; gap:10px; }
+      .pill { font-size:10px; padding:4px 6px; }
+      .amt { font-size:22px; }
+      .top-right-info { top:8px; right:8px; padding:4px 6px; }
+      .ca-text { max-width: 160px; font-size:10px; }
+    }
+
+    /* Fixed top-right info (mint + copy) */
+    .top-right-info { position:fixed; top:12px; right:12px; z-index:1000; display:flex; align-items:center; gap:8px; background: rgba(10,9,8,0.75); border:1px solid rgba(205,127,50,.45); padding:6px 8px; border-radius:0; backdrop-filter: blur(2px); }
+    .ca-text { color: var(--accent); font-size: 11px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #copy-ca-btn { padding:4px 8px; font-size:11px; line-height:1; border-color: rgba(205,127,50,.6); background:#171411; }
+    #copy-ca-btn:hover { background:#1e1a16; border-color: var(--primary); }
+    #copy-feedback { position:absolute; top:100%; right:0; transform: translateY(6px); background: var(--primary); color:#0b0a09; padding:4px 6px; border:1px solid rgba(205,127,50,.6); border-radius:0; font-size:10px; opacity:0; pointer-events:none; transition: opacity .2s ease; }
+    #copy-feedback.show { opacity:1; }
+
+    /* Animated brass lines overlay (performance-tuned) */
+    .brass-lines-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; transform: translateZ(0); will-change: transform; }
+    .brass-line { position: absolute; opacity: 0.28; will-change: transform; backface-visibility: hidden; }
+    /* Use gradients with transparent edges to avoid expensive blend modes */
+    .brass-line.horizontal {
+      height: 120px;
+      width: 40vw;
+      left: -120px;
+      top: 50%;
+      background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(205,127,50,.35) 25%, rgba(230,168,97,.45) 50%, rgba(205,127,50,.35) 75%, rgba(0,0,0,0) 100%);
+    }
+    .brass-line.vertical {
+      width: 120px;
+      height: 40vh;
+      top: -120px;
+      left: 50%;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(205,127,50,.35) 25%, rgba(230,168,97,.45) 50%, rgba(205,127,50,.35) 75%, rgba(0,0,0,0) 100%);
+    }
+  </style>
 </head>
 <body>
-    <div id="modal-global-effects">
-        <div class="glow-effect"></div>
-        <div class="streak-container">
-            <!-- Light streaks will be dynamically generated here by JavaScript -->
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <img class="logo" src="https://anticontainmentsystem.com/pfp/tokenimage.png" alt="YSTEM" />
+        <div>
+          <h1>$YSTEM Holder Checker</h1>
+          <p class="sub">Checks a connected Solana wallet for YSTEM and shows the holder's balance.</p>
         </div>
-    </div>
-    <div class="top-left-controls">
-        <button id="system-btn">System</button>
-        <button id="new-modal-btn">Ask YSTEM</button>
-    </div>
-    <div class="top-right-info">
-        <span class="ca-text" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump">CA: 2pABQ...pump</span>
-        <button id="copy-ca-btn" title="Copy to clipboard">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        </button>
-        <span id="copy-feedback">Copied!</span>
-    </div>
-
-    <!-- System Modal -->
-    <div id="system-modal">
-        <div class="modal-overlay"></div>
-        <div class="modal-content system-modal-content">
-            <button class="modal-close-btn">&times;</button>
-            <div class="system-modal-grid">
-                <div class="tl-panel system-panel">
-                    <h3>INFORMATION</h3>
-                    <ul class="panel-links-list">
-                        <li><button class="panel-link" data-content-id="tokenomics-data">Tokenomics</button></li>
-                        <li><button class="panel-link" data-content-id="satsurge-data">System Surge Saturday</button></li>
-                        <li class="roadmap-snapshot-row">
-                            <button class="panel-link" data-content-id="roadmap-data">Roadmap</button>
-                            <button class="panel-link snapshot-button" data-content-id="snapshot-data">Snapshot</button>
-                        </li>
-                        <li><button class="panel-link" data-content-id="presskit-data">Press Kit</button></li>
-                    </ul>
-                </div>
-                <div class="tr-panel system-panel">
-                    <div id="info-display" class="panel-content-display">
-                        <p>Select an option from the left to view details.</p>
-                    </div>
-                </div>
-                <div class="bl-panel system-panel">
-                    <h3>LAUNCH</h3>
-                    <div class="panel-buttons">
-                        <button id="collabs-btn" class="system-action-btn">Collabs</button>
-                    </div>
-                </div>
-                <div class="br-panel system-panel">
-                    <h3>TOOLS</h3>
-                    <div class="panel-buttons">
-                        <button id="updates-btn" class="system-action-btn">Updates</button>
-                    </div>
-                </div>
-            </div>
+        <button id="btn-connect" class="btn connect">Connect Wallet</button>
+      </header>
+      <main>
+        <div class="row">
+          <div class="pill"><span>Token:</span><span class="mono">YSTEM</span></div>
+          <div class="pill" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump"><span>Mint:</span><span class="mono" id="mintFixed">2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump</span></div>
+          <button id="btn-check" class="btn">Check Balance</button>
         </div>
-    </div>
 
-    <div id="updates-modal">
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-            <button class="modal-close-btn">&times;</button>
-            <h2 class="modal-title">$YSTEM UPDATES</h2>
-            <div class="modal-body">
-                <div class="update-column">
-                    <h3>Latest Update</h3>
-                    <div class="update-item">
-                        <p class="update-text">First day of trip I was dead tired but still managed to set up the streaming laptop and pick up some tech needed for a smooth experience, Set out my week of shop work and arrange materials for projects I will be undertaking. Finishing off the day coding and updating and checking up on Socials and will be testing out streaming on both mobile and on desktop.</p>
-                        <span class="update-timestamp">August 4, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Heading to airport and will be livestreaming once I get through the gate and then at the lay over airport and then after I get to the final destination and settled in I will go for a little longer stream.</p>
-                        <span class="update-timestamp">August 3, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Prepared for flight from West coast to East coast and had an interview with Pump Radio about the $YSTEM token, you can watch that <a href="https://x.com/NinetentwoNTT/status/1951867596590227957" target="_blank" style="color: #cd7f32; text-decoration: underline;">HERE</a>.</p>
-                        <span class="update-timestamp">August 2, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Initial Creator Wallet The entire 9,102,000 $YSTEM initial supply was bought by the creator wallet on launch. No free team tokens. No pre-allocation. 100% transparent. This is a project built on trust + output. 🎨💻🔧</p>
-                        <span class="update-timestamp">August 1, 2025</span>
-                    </div>
-                     <div class="update-item">
-                        <p class="update-text"> Token Lock 🚨 9,000,000 $YSTEM tokens are locked until Sept 2, 2029. Another 100,000 are locked and re-locked monthly unless the community votes to use them. Only 2,000 tokens remain unlocked in the creator wallet for live studio utility. 🔒⚙️</p>
-                        <span class="update-timestamp">August 1, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Buyback & Rewards Wallet 💥 First $YSTEM buyback complete! ~1,500,000 tokens have been purchased by a dedicated Rewards & Giveaways wallet. Buybacks will happen every Friday to strengthen the project and reward the community. 🔁📈</p>
-                        <span class="update-timestamp">August 1, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Trivia Challenges 🔥
-🏁 $YSTEM Trivia Challenge at every market cap milestone:
-➡️ 20K MC
-➡️ 40K MC
-➡️ 60K MC
-Be the first to answer the trivia question in pump.fun chat and win 500,000 $YSTEM. Stay sharp — rewards fly fast. 🧠💰</p>
-                        <span class="update-timestamp">August 1, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Initial commit for the Anticontainment System project. The journey of a thousand lines of code begins with a single commit. #git #newproject</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                </div>
-                <div class="update-column">
-                    <h3>Previous Updates</h3>
-                    <div class="update-item">
-                        <p class="update-text">Fixed a critical issue with the cursor trail effect not appearing on some browsers. Performance should be much better now. #bugfix #frontend</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">The new continuous scroller in the banner section is now live. Let me know what you think! More integrations coming soon. #ux #design</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Header image now has a cool zoom-fade animation on click. It's the little details that matter. #cssanimation #interaction</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Set up the basic three-section layout: Header, Banner, Footer. Building a strong foundation for what's to come. #layout #webdesign</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                     <div class="update-item">
-                        <p class="update-text">Added IntersectionObserver to fade in footer elements on scroll. Enhancing the user experience with subtle animations. #javascript #ux</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="wallet-info">
-                    <p class="wallet-text">Dev wallet initial buy 9,102,000 $YSTEM (D1RdGs1YqauADk8G3UpwwX6cvb6YoBHzWzU4edqtHVZS)</p>
-                    <p class="wallet-text">Reward/Buy backs/Giveaway wallet (2dnNnkoGJeWkh8zm3urCcYYK26dDHyE8Cu18UHhwoBEc)</p>
-                </div>
-                <a href="https://solscan.io/account/Fc8Ap3RwUXb6A78Zyi4QdmTjF9XjgpwosCjBFcCjtu7X" target="_blank" class="footer-link"><span>Lock until 2nd September 2029</span> — 9,000,000 $YSTEM</a>
-                <a href="https://solscan.io/account/GAdPZrbB5UH3wuJbYAPCA5jR55ECwz2mEMKdySS2g6W2" target="_blank" class="footer-link"><span>Lock until September 1st 2025</span> — 100,000 $YSTEM (re-lock monthly)</a>
-                <a href="https://solscan.io/account/D1RdGs1YqauADk8G3UpwwX6cvb6YoBHzWzU4edqtHVZS" target="_blank" class="footer-link"><span>Dev holdings</span> — 2000 $YSTEM held for development use</a>
-            </div>
+        <div class="row" style="justify-content:space-between;">
+          <div class="pill"><span>Network:</span><span class="mono" id="net">mainnet-beta</span></div>
+          <div class="pill"><span>Wallet:</span><span class="mono" id="walletLabel">Not connected</span></div>
         </div>
-    </div>
 
-    <div id="new-modal">
-        <div class="modal-overlay"></div>
-        <div class="modal-content new-modal-content">
-            <button class="modal-close-btn">&times;</button>
-            
-            <div class="modal-body">
-                <div id="deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0"></div> <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
-            </div>
+        <div class="result" id="result">
+          <div class="status">Status: <span id="status">Waiting for wallet…</span></div>
+          <div style="margin-top:8px;">
+            <div class="muted">YSTEM Balance</div>
+            <div class="amt" id="amount">—</div>
+            <div class="muted" id="raw" style="font-size:12px; margin-top:6px;"></div>
+          </div>
         </div>
+      </main>
+      <footer>
+        <div>ANTICONTAINMENT SYSTEM · Hold. Conquer. Ascend.</div>
+        <div><a href="https://pump.fun/coin/2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump" target="_blank" rel="noopener">catch the stream</a></div>
+      </footer>
     </div>
+  </div>
 
-    <div id="cursor-trail-container"></div>
-    <div class="container">
-        <!-- Header Section -->
-        <section class="header-section">
-            <div class="brass-lines-container"></div>
-            <div class="header-content">
-                <img src="https://dev-nightperson.github.io/anticontainment-system/shortloop.gif" alt="Header Image" class="header-image">
-            </div>
-        </section>
+  <!-- Fixed top-right info (mint + copy) -->
+  <div class="top-right-info">
+    <span class="ca-text mono" id="caText" title="Token mint"></span>
+    <button id="copy-ca-btn" class="btn" aria-label="Copy mint">Copy</button>
+    <div id="copy-feedback">Copied</div>
+  </div>
 
-        <!-- Banner Section -->
-        <section class="banner-section">
-            <div class="iframe-container">
-                <iframe 
-                    src="https://continuous-scroller--beautifulbloom.on.websim.com/?v=22" 
-                    class="banner-iframe"
-                    frameborder="0"
-                    allowfullscreen
-                    scrolling="no">
-                </iframe>
-            </div>
-        </section>
+  <!-- Brass lines overlay -->
+  <div class="brass-lines-container" id="brassLines" aria-hidden="true"></div>
 
-        <!-- Footer Section -->
-        <section class="footer-section">
-            <div class="brass-lines-container"></div>
-            <div class="footer-content">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>About [soon*]</h3>
-                        <ul>
-                            <li><a href="#">About 9102*</a></li>
-                            <li><a href="https://medium.com/@anticontainment.system/from-visual-art-ambitions-to-the-sonic-innovations-of-ninetentwo-anticontainment-system-015b6d337968">My Story</a></li>
-                            <li><a href="collabs.html">Collabs</a></li>
-                            <li><a href="#">Press Kit*</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Offerings [paused*]</h3>
-                        <ul>
-                            <li><a href="#">Design*</a></li>
-                            <li><a href="#">Development*</a></li>
-                            <li><a href="#">Consulting*</a></li>
-                            <li><a href="#">Engineering*</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Media</h3>
-                        <ul>
-                            <li><a href="https://www.youtube.com/@ANTICONTAINMENTSYSTEM" target="_blank">YT $YSTEM</a></li>
-                            <li><a href="https://www.youtube.com/@ninetentwoNTT" target="_blank">YT NTT</a></li>
-                            <li><a href="https://medium.com/@anticontainment.system/about" target="_blank">Medium</a></li>
-                            <li><a href="#">Portfolio [planned launch]</a></li>
-                            <li><a href="#">Downloads [planned launch]</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <div class="connect-header">
-                            <h3>Connect</h3>
-                            <div class="connect-tooltip">
-                                <div class="tooltip-row"><strong>𝕏:</strong> <span>@NinetentwoNTT</span></div>
-                                <div class="tooltip-row"><strong>IG:</strong> <span>@ninetentwo</span></div>
-                                <div class="tooltip-row"><strong>TG:</strong> <span>AnticontainmentPortal</span></div>
-                                <hr class="tooltip-divider">
-                                <div class="tooltip-row"><strong>CA:</strong> <span>2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump</span></div>
-                            </div>
-                        </div>
-                        <ul>
-                            <li><a href="https://x.com/NinetentwoNTT" target="_blank">𝕏</a></li>
-                            <li><a href="https://www.instagram.com/ninetentwo" target="_blank">IG</a></li>
-                            <li><a href="https://t.me/AnticontainmentPortal" target="_blank">TG</a></li>
-                            <li><a href="https://x.com/i/communities/1948283127836856671" target="_blank">𝕏 Community 📰</a></li>
-                            <li><a href="https://pump.fun/coin/2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump" target="_blank">PUMP.FUN</a></li>
-                            <li><a href="https://dexscreener.com/solana/9yph933kkmxfsxqnqdysm5a8wuqaxhfq4fdg97vfjxe8" target="_blank">Dexscreener</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
+  <!-- Solana web3.js (IIFE build) -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-    <!-- Image Lightbox for Snapshot -->
-    <div id="image-lightbox">
-        <div class="image-lightbox-overlay"></div>
-        <div class="image-lightbox-content">
-            <img src="" alt="Full size image" class="image-lightbox-img">
-        </div>
-    </div>
+  <script>
+    (function(){
+      const { Connection, clusterApiUrl, PublicKey } = solanaWeb3;
+      const urlRpc = new URLSearchParams(location.search).get('rpc');
+      const HELIUS_RPC = 'https://mainnet.helius-rpc.com/?api-key=45e049e6-8704-44f5-ad2d-916c5a8dd845';
+      const RPC = urlRpc || HELIUS_RPC; // override via ?rpc=...
+      const connection = new Connection(RPC, 'confirmed');
+      // Show which RPC host is being used in the UI
+      try {
+        const host = new URL(RPC).host || 'custom RPC';
+        const netEl = document.getElementById('net');
+        if (netEl) netEl.textContent = `mainnet-beta · ${host}`;
+      } catch {}
 
-    <script src="script.js"></script>
+      const $ = (id)=>document.getElementById(id);
+      const status = (msg, cls) => {
+        const el = $('status');
+        el.textContent = msg;
+        el.className = cls || '';
+      };
+
+      const btnConnect = $('btn-connect');
+      const btnCheck = $('btn-check');
+      const walletLabel = $('walletLabel');
+      const amountEl = $('amount');
+      const rawEl = $('raw');
+      const mintFixed = $('mintFixed');
+
+      let provider = null; // Phantom or any Wallet Standard provider exposing window.solana
+      let pubkey = null;
+      const YSTEM_MINT_STR = '2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump';
+
+      function detectProvider(){
+        if (window.phantom?.solana) return window.phantom.solana; // newer Phantom
+        if (window.solana?.isPhantom) return window.solana;       // legacy Phantom
+        return window.solana || null;                              // any Wallet Standard impl
+      }
+
+      async function connect(){
+        try {
+          provider = detectProvider();
+          if (!provider) {
+            status('No Solana wallet detected. Please install Phantom.', 'warn');
+            window.open('https://phantom.app/', '_blank');
+            return;
+          }
+          const res = await provider.connect();
+          pubkey = res.publicKey || provider.publicKey;
+          walletLabel.textContent = pubkey?.toString() || 'Unknown';
+          status('Wallet connected. Ready to check balance.', 'ok');
+          // Auto-check balance on successful connect for better UX
+          checkBalance();
+        } catch (e) {
+          console.error(e);
+          status('Wallet connection rejected or failed.', 'err');
+        }
+      }
+
+      async function checkBalance(){
+        try {
+          if (!pubkey) { status('Connect your wallet first.', 'warn'); return; }
+          let mint;
+          try {
+            mint = new PublicKey(YSTEM_MINT_STR);
+          } catch (e) {
+            status('Configured token mint is invalid. Please update the app with a valid mint.', 'err');
+            return;
+          }
+
+          status('Querying token accounts…');
+          // Use parsed accounts so we don’t have to deserialize SPL layouts manually
+          const resp = await connection.getParsedTokenAccountsByOwner(pubkey, { mint });
+          const accounts = resp.value || [];
+
+          if (accounts.length === 0) {
+            amountEl.textContent = '0.000000';
+            rawEl.textContent = 'No associated token accounts for this mint.';
+            status('No balance found for this token.', 'warn');
+            return;
+          }
+
+          // Sum raw amounts safely
+          let totalAmount = 0n;
+          let decimals = 0;
+          for (const { account } of accounts) {
+            const info = account.data.parsed.info;
+            const amtStr = info.tokenAmount.amount; // raw as string
+            const dec = info.tokenAmount.decimals;
+            decimals = dec; // all accounts of same mint share decimals
+            totalAmount += BigInt(amtStr);
+          }
+
+          // Format with decimals → string
+          const human = formatWithDecimals(totalAmount, decimals);
+          amountEl.textContent = human;
+          rawEl.textContent = `Raw: ${totalAmount.toString()} (decimals=${decimals})`;
+          status('Balance fetched successfully.', 'ok');
+        } catch (e) {
+          console.error(e);
+          const msg = (e && e.message) ? e.message : String(e);
+          status(`Failed to fetch balance: ${msg}`, 'err');
+        }
+      }
+
+      function formatWithDecimals(amountBigInt, decimals){
+        const s = amountBigInt.toString().padStart(decimals + 1, '0');
+        const int = s.slice(0, -decimals) || '0';
+        const frac = s.slice(-decimals);
+        // Trim trailing zeros in fractional part but keep at least 2
+        const fracTrim = frac.replace(/0+$/,'');
+        const shownFrac = (fracTrim === '') ? '00' : fracTrim.slice(0, 12); // cap length
+        return Number(int).toLocaleString(undefined) + (shownFrac ? '.' + shownFrac : '');
+      }
+
+      // Listeners
+      btnConnect.addEventListener('click', connect);
+      btnCheck.addEventListener('click', checkBalance);
+
+      // Auto-update if user switches accounts in wallet
+      window.addEventListener('load', () => {
+        provider = detectProvider();
+        if (provider) {
+          provider.on?.('connect', () => { walletLabel.textContent = provider.publicKey?.toString() || 'Connected'; });
+          provider.on?.('disconnect', () => { walletLabel.textContent = 'Not connected'; pubkey = null; status('Wallet disconnected.','warn'); });
+          provider.on?.('accountChanged', (pk) => {
+            pubkey = pk ? new PublicKey(pk.toString()) : null;
+            walletLabel.textContent = pubkey ? pubkey.toString() : 'Not connected';
+            if (pubkey) checkBalance();
+          });
+        }
+
+        // Populate mint text and wire copy
+        const caEl = document.getElementById('caText');
+        const copyBtn = document.getElementById('copy-ca-btn');
+        const copyFb = document.getElementById('copy-feedback');
+        if (caEl) caEl.textContent = YSTEM_MINT_STR;
+        copyBtn?.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(YSTEM_MINT_STR); copyFb?.classList.add('show'); setTimeout(()=>copyFb?.classList.remove('show'), 900); } catch {}
+        });
+
+        // Spawn animated brass lines using requestAnimationFrame (smooth, no CSS animation hang)
+        const cont = document.getElementById('brassLines');
+        if (cont) {
+          const rnd = (min,max)=>Math.random()*(max-min)+min;
+          const state = []; // {el, x, y, vx, vy, w, h}
+
+          // Create horizontals
+          const hCount = 10;
+          for (let i=0;i<hCount;i++) {
+            const el = document.createElement('div');
+            el.className = 'brass-line horizontal';
+            cont.appendChild(el);
+            const w = Math.max(window.innerWidth * rnd(0.25, 0.55), 200);
+            el.style.width = `${w}px`;
+            const h = 120; // as in CSS
+            const y = rnd(0.05, 0.95) * window.innerHeight;
+            const dir = Math.random() < 0.5 ? -1 : 1;
+            const speed = rnd(120, 220) * dir; // px/s, faster for visible motion
+            const x = dir < 0 ? rnd(0.3, 1.0) * window.innerWidth : rnd(-0.6, 0.2) * window.innerWidth;
+            el.style.top = `${y}px`;
+            state.push({ el, x, y, vx: speed, vy: 0, w, h });
+            // Initial transform so line is visible in starting position
+            el.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y - 60)}px, 0)`;
+          }
+
+          // Create verticals
+          const vCount = 8;
+          for (let i=0;i<vCount;i++) {
+            const el = document.createElement('div');
+            el.className = 'brass-line vertical';
+            cont.appendChild(el);
+            const h = Math.max(window.innerHeight * rnd(0.25, 0.55), 160);
+            el.style.height = `${h}px`;
+            const w = 120; // as in CSS
+            const x = rnd(0.05, 0.95) * window.innerWidth;
+            const dir = Math.random() < 0.5 ? -1 : 1;
+            const speed = rnd(30, 90) * dir; // px/s
+            const y = dir < 0 ? rnd(-0.3, 0.2) * window.innerHeight : rnd(0.3, 1.0) * window.innerHeight;
+            el.style.left = `${x}px`;
+            state.push({ el, x, y, vx: 0, vy: speed, w, h });
+            // Initial transform
+            el.style.transform = `translate3d(${Math.round(x - 60)}px, ${Math.round(y)}px, 0)`;
+          }
+
+          let last = performance.now();
+          function tick(now){
+            const dt = (now - last) / 1000; // seconds
+            last = now;
+            const W = window.innerWidth;
+            const H = window.innerHeight;
+            for (const s of state) {
+              s.x += s.vx * dt;
+              s.y += s.vy * dt;
+              // wrap-around with small offset to avoid popping
+              if (s.vx !== 0) {
+                if (s.x > W + 240) s.x = -s.w - 240;
+                if (s.x < -s.w - 240) s.x = W + 240;
+                s.el.style.transform = `translate3d(${Math.round(s.x)}px, ${Math.round(s.y - 60)}px, 0)`; // -60 to center 120px height
+              } else {
+                if (s.y > H + 240) s.y = -s.h - 240;
+                if (s.y < -s.h - 240) s.y = H + 240;
+                s.el.style.transform = `translate3d(${Math.round(s.x - 60)}px, ${Math.round(s.y)}px, 0)`; // -60 to center 120px width
+              }
+            }
+            raf = requestAnimationFrame(tick);
+          }
+
+          let raf = requestAnimationFrame(tick);
+
+          // Handle resize to keep motion correct
+          window.addEventListener('resize', () => {
+            // No heavy recalculation; positions will wrap naturally
+          });
+        }
+      });
+
+    })();
+  </script>
 </body>
 </html>
+
