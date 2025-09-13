@@ -24,10 +24,10 @@
       filter: blur(90px); animation: spinGlow 28s linear infinite; }
     @keyframes spinGlow { to { transform: rotate(360deg); } }
     .wrap { max-width: 640px; margin: 24px auto; padding: 12px; }
-    /* Frosted glass card: semi-transparent background + backdrop blur */
-    .card { background: rgba(20,17,15,0.60); border: 1px solid rgba(205,127,50,.35); border-radius: 0; box-shadow: none; overflow:hidden; backdrop-filter: blur(8px) saturate(1.15); -webkit-backdrop-filter: blur(8px) saturate(1.15); }
+    /* Frosted glass card: semi-transparent background + stronger backdrop blur */
+    .card { background: rgba(20,17,15,0.45); border: 1px solid rgba(205,127,50,.35); border-radius: 0; box-shadow: none; overflow:hidden; backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); }
     header { padding: 12px 16px; border-bottom: 1px solid rgba(205,127,50,.35); display:flex; align-items:center; gap:10px; }
-    .logo { width:26px; height:26px; border-radius:0; background: var(--primary); box-shadow: none; }
+    .logo { width:28px; height:28px; border-radius:0; object-fit: cover; object-position: center; display:block; }
     h1 { font-size: 16px; margin:0; letter-spacing: .3px; font-weight: 800; }
     .sub { color: var(--muted); font-size: 11px; margin:2px 0 0 0; }
     main { padding: 16px; display:grid; gap:12px; }
@@ -39,6 +39,9 @@
     .btn:hover { border-color: var(--primary); background:#1e1a16; }
     .btn:active { transform: none; }
     .btn.primary { background: var(--primary); border-color: var(--primary); color:#0b0a09; text-shadow: none; }
+    /* Fancy compact Connect button for header */
+    .btn.connect { margin-left:auto; padding:6px 10px; font-size:12px; letter-spacing:.4px; text-transform: uppercase; background: linear-gradient(180deg, rgba(205,127,50,.95), rgba(180,110,35,.95)); color:#0b0a09; border-color: rgba(255,255,255,.2); box-shadow: 0 0 0 1px rgba(205,127,50,.35) inset, 0 4px 14px rgba(205,127,50,.25); }
+    .btn.connect:hover { background: linear-gradient(180deg, rgba(215,137,60,1), rgba(185,115,40,1)); box-shadow: 0 0 0 1px rgba(205,127,50,.5) inset, 0 6px 18px rgba(205,127,50,.35); }
     .pill { display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(205,127,50,.35); padding:4px 8px; border-radius:0; background:#171411; color:var(--muted); font-size:11px; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .result { background:#15120f; border:1px solid rgba(205,127,50,.35); border-radius:0; padding:10px; }
@@ -52,6 +55,20 @@
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
+    /* Mobile optimizations */
+    @media (max-width: 600px) {
+      .wrap { max-width: 100%; margin: 12px auto; padding: 8px; }
+      header { padding: 10px 12px; gap:8px; }
+      h1 { font-size: 15px; }
+      .sub { font-size: 10px; }
+      .btn.connect { padding:6px 8px; font-size:11px; }
+      main { padding: 12px; gap:10px; }
+      .pill { font-size:10px; padding:4px 6px; }
+      .amt { font-size:22px; }
+      .top-right-info { top:8px; right:8px; padding:4px 6px; }
+      .ca-text { max-width: 160px; font-size:10px; }
+    }
+
     /* Fixed top-right info (mint + copy) */
     .top-right-info { position:fixed; top:12px; right:12px; z-index:1000; display:flex; align-items:center; gap:8px; background: rgba(10,9,8,0.75); border:1px solid rgba(205,127,50,.45); padding:6px 8px; border-radius:0; backdrop-filter: blur(2px); }
     .ca-text { color: var(--accent); font-size: 11px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -61,41 +78,22 @@
     #copy-feedback.show { opacity:1; }
 
     /* Animated brass lines overlay (performance-tuned) */
-    .brass-lines-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; contain: strict; transform: translateZ(0); will-change: transform; }
+    .brass-lines-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; transform: translateZ(0); will-change: transform; }
     .brass-line { position: absolute; opacity: 0.28; will-change: transform; backface-visibility: hidden; }
     /* Use gradients with transparent edges to avoid expensive blend modes */
     .brass-line.horizontal {
       height: 120px;
-      width: var(--length, 40vw);
+      width: 40vw;
       left: -120px;
-      top: var(--position, 50%);
+      top: 50%;
       background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(205,127,50,.35) 25%, rgba(230,168,97,.45) 50%, rgba(205,127,50,.35) 75%, rgba(0,0,0,0) 100%);
-      animation: moveHorizontal var(--duration, 18s) linear infinite both;
     }
     .brass-line.vertical {
       width: 120px;
-      height: var(--length, 40vh);
+      height: 40vh;
       top: -120px;
-      left: var(--position, 50%);
+      left: 50%;
       background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(205,127,50,.35) 25%, rgba(230,168,97,.45) 50%, rgba(205,127,50,.35) 75%, rgba(0,0,0,0) 100%);
-      animation: moveVertical var(--duration, 22s) linear infinite both;
-    }
-
-    @keyframes moveHorizontal {
-      from { transform: translate3d(-240px, 0, 0); }
-      to   { transform: translate3d(calc(100vw + 240px), 0, 0); }
-    }
-    @keyframes moveHorizontalReverse {
-      from { transform: translate3d(calc(100vw + 240px), 0, 0); }
-      to   { transform: translate3d(-240px, 0, 0); }
-    }
-    @keyframes moveVertical {
-      from { transform: translate3d(0, calc(100vh + 240px), 0); }
-      to   { transform: translate3d(0, -240px, 0); }
-    }
-    @keyframes moveVerticalReverse {
-      from { transform: translate3d(0, -240px, 0); }
-      to   { transform: translate3d(0, calc(100vh + 240px), 0); }
     }
   </style>
 </head>
@@ -103,17 +101,17 @@
   <div class="wrap">
     <div class="card">
       <header>
-        <div class="logo" aria-hidden="true"></div>
+        <img class="logo" src="https://anticontainmentsystem.com/pfp/tokenimage.png" alt="YSTEM" />
         <div>
           <h1>$YSTEM Holder Checker</h1>
           <p class="sub">Checks a connected Solana wallet for YSTEM and shows the holder's balance.</p>
         </div>
+        <button id="btn-connect" class="btn connect">Connect Wallet</button>
       </header>
       <main>
         <div class="row">
           <div class="pill"><span>Token:</span><span class="mono">YSTEM</span></div>
           <div class="pill" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump"><span>Mint:</span><span class="mono" id="mintFixed">2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump</span></div>
-          <button id="btn-connect" class="btn primary">Connect Wallet</button>
           <button id="btn-check" class="btn">Check Balance</button>
         </div>
 
@@ -291,37 +289,79 @@
           try { await navigator.clipboard.writeText(YSTEM_MINT_STR); copyFb?.classList.add('show'); setTimeout(()=>copyFb?.classList.remove('show'), 900); } catch {}
         });
 
-        // Spawn animated brass lines similar to the example
+        // Spawn animated brass lines using requestAnimationFrame (smooth, no CSS animation hang)
         const cont = document.getElementById('brassLines');
         if (cont) {
           const rnd = (min,max)=>Math.random()*(max-min)+min;
-          // horizontals
-          for (let i=0;i<8;i++) {
-            const h = document.createElement('div');
-            h.className='brass-line horizontal';
-            const dur = rnd(14,26);
-            h.style.setProperty('--position', `${rnd(5,95)}vh`);
-            h.style.setProperty('--length', `${rnd(20,60)}vw`);
-            h.style.setProperty('--duration', `${dur}s`);
-            // Alternate direction and start mid-cycle with negative delay
-            if (Math.random() < 0.5) h.style.animationName = 'moveHorizontalReverse';
-            h.style.animationDelay = `-${rnd(0,dur).toFixed(2)}s`;
-            cont.appendChild(h);
+          const state = []; // {el, x, y, vx, vy, w, h}
+
+          // Create horizontals
+          const hCount = 10;
+          for (let i=0;i<hCount;i++) {
+            const el = document.createElement('div');
+            el.className = 'brass-line horizontal';
+            cont.appendChild(el);
+            const w = Math.max(window.innerWidth * rnd(0.25, 0.55), 200);
+            el.style.width = `${w}px`;
+            const h = 120; // as in CSS
+            const y = rnd(0.05, 0.95) * window.innerHeight;
+            const dir = Math.random() < 0.5 ? -1 : 1;
+            const speed = rnd(120, 220) * dir; // px/s, faster for visible motion
+            const x = dir < 0 ? rnd(0.3, 1.0) * window.innerWidth : rnd(-0.6, 0.2) * window.innerWidth;
+            el.style.top = `${y}px`;
+            state.push({ el, x, y, vx: speed, vy: 0, w, h });
+            // Initial transform so line is visible in starting position
+            el.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y - 60)}px, 0)`;
           }
-          // verticals
-          for (let i=0;i<6;i++) {
-            const v = document.createElement('div');
-            v.className='brass-line vertical';
-            const dur = rnd(18,30);
-            v.style.setProperty('--position', `${rnd(5,95)}vw`);
-            v.style.setProperty('--length', `${rnd(20,60)}vh`);
-            v.style.setProperty('--duration', `${dur}s`);
-            if (Math.random() < 0.5) v.style.animationName = 'moveVerticalReverse';
-            v.style.animationDelay = `-${rnd(0,dur).toFixed(2)}s`;
-            cont.appendChild(v);
+
+          // Create verticals
+          const vCount = 8;
+          for (let i=0;i<vCount;i++) {
+            const el = document.createElement('div');
+            el.className = 'brass-line vertical';
+            cont.appendChild(el);
+            const h = Math.max(window.innerHeight * rnd(0.25, 0.55), 160);
+            el.style.height = `${h}px`;
+            const w = 120; // as in CSS
+            const x = rnd(0.05, 0.95) * window.innerWidth;
+            const dir = Math.random() < 0.5 ? -1 : 1;
+            const speed = rnd(30, 90) * dir; // px/s
+            const y = dir < 0 ? rnd(-0.3, 0.2) * window.innerHeight : rnd(0.3, 1.0) * window.innerHeight;
+            el.style.left = `${x}px`;
+            state.push({ el, x, y, vx: 0, vy: speed, w, h });
+            // Initial transform
+            el.style.transform = `translate3d(${Math.round(x - 60)}px, ${Math.round(y)}px, 0)`;
           }
-          // Kick animations to avoid potential initial paint hang
-          requestAnimationFrame(()=>{ cont.offsetHeight; });
+
+          let last = performance.now();
+          function tick(now){
+            const dt = (now - last) / 1000; // seconds
+            last = now;
+            const W = window.innerWidth;
+            const H = window.innerHeight;
+            for (const s of state) {
+              s.x += s.vx * dt;
+              s.y += s.vy * dt;
+              // wrap-around with small offset to avoid popping
+              if (s.vx !== 0) {
+                if (s.x > W + 240) s.x = -s.w - 240;
+                if (s.x < -s.w - 240) s.x = W + 240;
+                s.el.style.transform = `translate3d(${Math.round(s.x)}px, ${Math.round(s.y - 60)}px, 0)`; // -60 to center 120px height
+              } else {
+                if (s.y > H + 240) s.y = -s.h - 240;
+                if (s.y < -s.h - 240) s.y = H + 240;
+                s.el.style.transform = `translate3d(${Math.round(s.x - 60)}px, ${Math.round(s.y)}px, 0)`; // -60 to center 120px width
+              }
+            }
+            raf = requestAnimationFrame(tick);
+          }
+
+          let raf = requestAnimationFrame(tick);
+
+          // Handle resize to keep motion correct
+          window.addEventListener('resize', () => {
+            // No heavy recalculation; positions will wrap naturally
+          });
         }
       });
 
