@@ -393,6 +393,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- Chat Modal Logic ---
+    const chatLink = document.getElementById('chat-link');
+    const chatModal = document.getElementById('chat-modal');
+
+    if (chatLink && chatModal) {
+        const chatModalContent = chatModal.querySelector('.chat-modal-content');
+        const chatModalCloseBtn = chatModal.querySelector('.modal-close-btn');
+        const chatModalOverlay = chatModal.querySelector('.modal-overlay');
+
+        const openChatModal = () => {
+            chatModal.classList.add('is-open');
+            activateGlobalBackground();
+        };
+
+        const closeChatModal = () => {
+            chatModal.classList.remove('is-open');
+            deactivateGlobalBackground();
+        };
+
+        chatLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            openChatModal();
+        });
+
+        if (chatModalCloseBtn) chatModalCloseBtn.addEventListener('click', closeChatModal);
+        if (chatModalOverlay) chatModalOverlay.addEventListener('click', closeChatModal);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && chatModal.classList.contains('is-open')) {
+                closeChatModal();
+            }
+        });
+    }
+
     // --- Image Lightbox Logic ---
     const imageLightbox = document.getElementById('image-lightbox');
     const imageLightboxOverlay = imageLightbox ? imageLightbox.querySelector('.image-lightbox-overlay') : null;
@@ -460,6 +494,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (newModal && newModal.classList.contains('is-open')) { // Close new modal if open
                 closeNewModal();
             }
+            if (chatModal && chatModal.classList.contains('is-open')) {
+                closeChatModal();
+            }
             openUpdatesModal(); // Then open updates modal
         });
         updatesModalCloseBtn.addEventListener('click', closeUpdatesModal);
@@ -489,6 +526,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (imageLightbox && imageLightbox.classList.contains('is-open')) {
                 closeImageLightbox();
+            }
+            if (chatModal && chatModal.classList.contains('is-open')) {
+                closeChatModal();
             }
             // Reset modal count for next page load
             openModalCount = 0; 
@@ -523,6 +563,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (updatesModal && updatesModal.classList.contains('is-open')) {
                 closeUpdatesModal();
+            }
+            if (chatModal && chatModal.classList.contains('is-open')) {
+                closeChatModal();
             }
             openNewModal(); // Then open the new modal
         });

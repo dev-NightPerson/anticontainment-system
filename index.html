@@ -74,6 +74,29 @@
                 <div class="update-column">
                     <h3>Latest Update</h3>
                     <div class="update-item">
+                        <p class="update-text">The "System Surge Saturday" event was a success! We completed a live buyback, hosted a market cap trivia challenge, and airdropped tokens to a random top-20 holder. Thanks to everyone who participated. Tune in next Saturday! 🚀</p>
+                        <span class="update-timestamp">August 9, 2025</span>
+                    </div>
+                    <div class="update-item">
+                        <p class="update-text">Refined the brass line animations on the main page and collaborator page for better performance and a more organic feel. Also adjusted the global modal background effects to be more subtle. #frontend #css</p>
+                        <span class="update-timestamp">August 8, 2025</span>
+                    </div>
+                    <div class="update-item">
+                        <p class="update-text">Continued work on the collab page 3D carousel, adding touch-based drag controls for mobile users and refining the "Birdseye View" camera angle. Aiming for a smooth experience across all devices. 📱</p>
+                        <span class="update-timestamp">August 7, 2025</span>
+                    </div>
+                    <div class="update-item">
+                        <p class="update-text">Began testing the interactive chat modal integration. The goal is to provide a seamless way for the community to connect without leaving the site. Minor CSS tweaks needed for iframe scaling on different aspect ratios.</p>
+                        <span class="update-timestamp">August 6, 2025</span>
+                    </div>
+                    <div class="update-item">
+                        <p class="update-text">Successfully streamed the mobile setup test from the new location. Audio and video quality are solid. Ready to start scheduling regular work and community update streams. Follow on 𝕏 for notifications!</p>
+                        <span class="update-timestamp">August 5, 2025</span>
+                    </div>
+                </div>
+                <div class="update-column">
+                    <h3>Previous Updates</h3>
+                    <div class="update-item">
                         <p class="update-text">First day of trip I was dead tired but still managed to set up the streaming laptop and pick up some tech needed for a smooth experience, Set out my week of shop work and arrange materials for projects I will be undertaking. Finishing off the day coding and updating and checking up on Socials and will be testing out streaming on both mobile and on desktop.</p>
                         <span class="update-timestamp">August 4, 2025</span>
                     </div>
@@ -89,7 +112,7 @@
                         <p class="update-text">Initial Creator Wallet The entire 9,102,000 $YSTEM initial supply was bought by the creator wallet on launch. No free team tokens. No pre-allocation. 100% transparent. This is a project built on trust + output. 🎨💻🔧</p>
                         <span class="update-timestamp">August 1, 2025</span>
                     </div>
-                     <div class="update-item">
+                    <div class="update-item">
                         <p class="update-text"> Token Lock 🚨 9,000,000 $YSTEM tokens are locked until Sept 2, 2029. Another 100,000 are locked and re-locked monthly unless the community votes to use them. Only 2,000 tokens remain unlocked in the creator wallet for live studio utility. 🔒⚙️</p>
                         <span class="update-timestamp">August 1, 2025</span>
                     </div>
@@ -110,27 +133,8 @@ Be the first to answer the trivia question in pump.fun chat and win 500,000 $YST
                         <p class="update-text">Initial commit for the Anticontainment System project. The journey of a thousand lines of code begins with a single commit. #git #newproject</p>
                         <span class="update-timestamp">July 26, 2025</span>
                     </div>
-                </div>
-                <div class="update-column">
-                    <h3>Previous Updates</h3>
                     <div class="update-item">
                         <p class="update-text">Fixed a critical issue with the cursor trail effect not appearing on some browsers. Performance should be much better now. #bugfix #frontend</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">The new continuous scroller in the banner section is now live. Let me know what you think! More integrations coming soon. #ux #design</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Header image now has a cool zoom-fade animation on click. It's the little details that matter. #cssanimation #interaction</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                    <div class="update-item">
-                        <p class="update-text">Set up the basic three-section layout: Header, Banner, Footer. Building a strong foundation for what's to come. #layout #webdesign</p>
-                        <span class="update-timestamp">July 26, 2025</span>
-                    </div>
-                     <div class="update-item">
-                        <p class="update-text">Added IntersectionObserver to fade in footer elements on scroll. Enhancing the user experience with subtle animations. #javascript #ux</p>
                         <span class="update-timestamp">July 26, 2025</span>
                     </div>
                 </div>
@@ -154,6 +158,19 @@ Be the first to answer the trivia question in pump.fun chat and win 500,000 $YST
             
             <div class="modal-body">
                 <div id="deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0"></div> <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content chat-modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div class="modal-body chat-modal-body">
+                <iframe src="https://ystem-chat-3--beautifulbloom.on.websim.com/" class="chat-iframe" frameborder="0" scrolling="no"></iframe>
+            </div>
+            <div class="chat-modal-corner">
+                <img src="https://anticontainmentsystem.com/pfp/tokenimage.png" alt="Icon">
             </div>
         </div>
     </div>
@@ -187,12 +204,14 @@ Be the first to answer the trivia question in pump.fun chat and win 500,000 $YST
             <div class="footer-content">
                 <div class="footer-columns">
                     <div class="footer-column">
-                        <h3>About [soon*]</h3>
+                        <h3>About</h3>
                         <ul>
-                            <li><a href="#">About 9102*</a></li>
+                            <li><a href="#">About 9102</a></li>
                             <li><a href="https://medium.com/@anticontainment.system/from-visual-art-ambitions-to-the-sonic-innovations-of-ninetentwo-anticontainment-system-015b6d337968">My Story</a></li>
                             <li><a href="collabs.html">Collabs</a></li>
-                            <li><a href="#" id="press-kit-footer-link">Press Kit*</a></li>
+                            <li><a href="#" id="press-kit-footer-link">Press Kit</a></li>
+                            <li><a href="https://pump.fun/coin/2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump" target="_blank">PUMP.FUN</a></li>
+                            <li><a href="https://dexscreener.com/solana/9yph933kkmxfsxqnqdysm5a8wuqaxhfq4fdg97vfjxe8" target="_blank">Dexscreener</a></li>
                         </ul>
                     </div>
                     <div class="footer-column">
@@ -226,12 +245,11 @@ Be the first to answer the trivia question in pump.fun chat and win 500,000 $YST
                             </div>
                         </div>
                         <ul>
+                            <li><a href="#" id="chat-link">Chat</a></li>
                             <li><a href="https://x.com/NinetentwoNTT" target="_blank">𝕏</a></li>
                             <li><a href="https://www.instagram.com/ninetentwo" target="_blank">IG</a></li>
                             <li><a href="https://t.me/AnticontainmentPortal" target="_blank">TG</a></li>
                             <li><a href="https://x.com/i/communities/1948283127836856671" target="_blank">𝕏 Community 📰</a></li>
-                            <li><a href="https://pump.fun/coin/2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump" target="_blank">PUMP.FUN</a></li>
-                            <li><a href="https://dexscreener.com/solana/9yph933kkmxfsxqnqdysm5a8wuqaxhfq4fdg97vfjxe8" target="_blank">Dexscreener</a></li>
                         </ul>
                     </div>
                 </div>

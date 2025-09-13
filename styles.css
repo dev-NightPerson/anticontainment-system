@@ -1112,6 +1112,14 @@ html, body {
     align-items: center; /* Center vertically */
 }
 
+/* New wrapper to handle iframe scaling */
+.iframe-wrapper {
+    width: 1920px;
+    height: 1080px;
+    transform-origin: center center; /* Scale from the center */
+    /* JS will calculate and apply the scale */
+}
+
 /* Styling for the Pickaxe embed container */
 #deployment-6e9ad381-8457-42c2-bb5e-381caa1bbce0 {
     width: 100%; /* Take full width of its parent up to max-width */
@@ -1224,14 +1232,14 @@ html, body {
     }
 }
 
-/* Image Lightbox Styles */
-#image-lightbox {
+/* Chat Modal Styles */
+#chat-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 10001; /* Higher than other modals */
+    z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1240,43 +1248,131 @@ html, body {
     transition: opacity 0.3s ease;
 }
 
-#image-lightbox.is-open {
+#chat-modal.is-open {
     opacity: 1;
     pointer-events: auto;
 }
 
-.image-lightbox-overlay {
+.chat-modal-content {
+    width: 90vw; /* Changed from 90vh to 90vw to make it wider */
+    height: 90vh;
+    max-width: 1440px; /* Set a max-width to prevent it from getting too wide on large screens */
+    min-width: 320px; /* Prevent it from becoming too small */
+    padding: 0; /* Remove padding */
+    overflow: visible; /* Allow corner to be visible outside bounds */
+    position: relative;
+    background: #010101;
+    border: 2px solid #cd7f32;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-modal-content .modal-close-btn {
+    z-index: 2; /* Above iframe */
+    top: 1rem; /* Reposition with padding-like values */
+    right: 1.5rem;
+}
+
+.chat-modal-body {
+    flex-grow: 1;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Ensure wrapper scaling doesn't cause scrollbars on the body */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* New wrapper to handle iframe scaling */
+.iframe-wrapper {
+    width: 1920px;
+    height: 1080px;
+    transform-origin: center center; /* Scale from the center */
+    /* JS will calculate and apply the scale */
+}
+
+.chat-iframe {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    cursor: pointer;
+    border: 0;
+    border-radius: 6px; /* Match modal content's border-radius */
 }
 
-.image-lightbox-content {
-    position: relative;
-    width: 90vw;
-    height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden; /* Ensure image doesn't spill */
-}
-
-.image-lightbox-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+.chat-modal-corner {
+    position: absolute;
+    bottom: -60px; /* Position relative to the modal corner */
+    right: 4px; /* Position relative to the modal corner */
+    width: 140px;
+    height: 140px;
+    background: #1a1a1a;
     border: 2px solid #cd7f32;
-    box-shadow: 0 0 25px rgba(205, 127, 50, 0.6);
-    transform: scale(0.9);
-    transition: transform 0.3s ease-out;
+    border-radius: 50%;
+    display: flex;
+    align-items: center; /* Center icon */
+    justify-content: center; /* Center icon */
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.4);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+    z-index: 10001; /* Above modal content */
+    transform-origin: bottom right;
 }
 
-#image-lightbox.is-open .image-lightbox-img {
-    transform: scale(1);
+#chat-modal.is-open .chat-modal-corner {
+    animation: floatCircle 4s ease-in-out infinite;
+}
+
+.chat-modal-corner img {
+    width: 100%; /* Fill the container */
+    height: 100%;
+    object-fit: cover; /* Cover the area */
+    border-radius: 50%; /* Ensure it stays circular */
+}
+
+@media (max-width: 1200px) {
+    .chat-modal-corner {
+        right: 5px;
+    }
+}
+
+@media (max-width: 820px) {
+    .chat-modal-content {
+        min-width: 0; /* Remove min-width for smaller screens */
+        width: 95vw;
+        height: 95vh; /* Adjust height for mobile too */
+    }
+    .chat-modal-corner {
+        width: 120px;
+        height: 120px;
+        bottom: -50px;
+        right: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-modal-content {
+        width: 100vw;
+        height: 100vh;
+        min-width: 100vw;
+        border-radius: 0;
+        border: none;
+    }
+    .chat-modal-corner {
+        bottom: -20px;
+        right: 15px;
+        width: 150px;
+        height: 150px;
+    }
+    .chat-modal-corner img {
+        width: 100%;
+        height: 100%;
+    }
 }
 
 /* Mobile Responsive */
@@ -1474,5 +1570,20 @@ html, body {
     .light-streak {
         width: 3px; /* Slightly thinner on mobile */
         height: 250vmin; /* Even longer for smaller screens */
+    }
+}
+
+@keyframes floatCircle {
+    0% {
+        transform: translateY(0);
+        box-shadow: 0 0 15px rgba(205, 127, 50, 0.4);
+    }
+    50% {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 25px rgba(205, 127, 50, 0.6);
+    }
+    100% {
+        transform: translateY(0);
+        box-shadow: 0 0 15px rgba(205, 127, 50, 0.4);
     }
 }
