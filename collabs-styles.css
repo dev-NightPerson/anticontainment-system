@@ -346,7 +346,7 @@
 
 @media (max-width: 768px) {
     .chat-modal-corner {
-        bottom: -20px;
+        bottom: -40px;
         right: 15px;
         width: 150px;
         height: 150px;

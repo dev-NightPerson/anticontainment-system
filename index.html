@@ -17,6 +17,7 @@
     <div class="top-left-controls">
         <button id="system-btn">System</button>
         <button id="new-modal-btn">Ask YSTEM</button>
+        <button id="watch-btn">WATCH</button>
     </div>
     <div class="top-right-info">
         <span class="ca-text" title="2pABQvq9Ga8Y2TAAxZWYE2ebRBFsnfFHwQgWZAdapump">CA: 2pABQ...pump</span>
@@ -261,8 +262,32 @@ Be the first to answer the trivia question in pump.fun chat and win 500,000 $YST
     <div id="image-lightbox">
         <div class="image-lightbox-overlay"></div>
         <div class="image-lightbox-content">
-            <img src="" alt="Full size image" class="image-lightbox-img">
+            <img src="" alt="Snapshot" class="image-lightbox-img">
         </div>
+    </div>
+
+    <!-- Player Modal -->
+    <div id="player-modal" class="player-modal">
+        <div class="player-modal-header">
+            <span class="player-modal-title">↖ resize</span>
+            <div class="player-modal-controls">
+                <button id="pop-out-btn" title="Pop-out to new window">❐</button>
+                <button id="close-player-modal-btn" title="Close window">&times;</button>
+            </div>
+        </div>
+        <div class="player-modal-content">
+            <div class="iframe-blocker"></div>
+            <iframe id="kick-player" src="https://player.kick.com/ninetentwo?autoplay=true&muted=true" frameborder="0" scrolling="no" allowfullscreen="true"></iframe>
+        </div>
+        <!-- Resize Handles -->
+        <div class="resizer resizer-t"></div>
+        <div class="resizer resizer-tr"></div>
+        <div class="resizer resizer-r"></div>
+        <div class="resizer resizer-br"></div>
+        <div class="resizer resizer-b"></div>
+        <div class="resizer resizer-bl"></div>
+        <div class="resizer resizer-l"></div>
+        <div class="resizer resizer-tl"></div>
     </div>
 
     <script src="script.js"></script>

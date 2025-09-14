@@ -620,65 +620,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Cursor trail effect - Enhanced for cross-browser compatibility
-    const trailContainer = document.getElementById('cursor-trail-container');
-    if (trailContainer) {
-        let canCreateParticle = true;
-        
-        const createParticle = (x, y) => {
-            const particle = document.createElement('div');
-            particle.className = 'trail-particle';
-            
-            // Use transform for positioning to ensure hardware acceleration
-            particle.style.left = `${x}px`;
-            particle.style.top = `${y}px`;
-            particle.style.position = 'absolute';
-            
-            const size = Math.random() * 8 + 2;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${Math.random() > 0.5 ? size : size * (Math.random() * 1.5 + 0.5)}px`;
-            
-            const colors = ['#cd7f32', '#b8860b', '#daa520', '#e6a861'];
-            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            particle.style.opacity = '0.9';
-            
-            // Set CSS custom properties for drift
-            particle.style.setProperty('--drift-x', `${(Math.random() - 0.5) * 2}`);
-            particle.style.setProperty('--drift-y', `${(Math.random() - 0.5) * 2}`);
-            
-            trailContainer.appendChild(particle);
-            
-            // Force reflow to ensure animation starts
-            void particle.offsetWidth;
-            
-            setTimeout(() => {
-                if (particle.parentNode) {
-                    particle.remove();
-                }
-            }, 500);
-        };
-        
-        // Enhanced event listener with better browser support
-        const handleMouseMove = (e) => {
-            if (canCreateParticle) {
-                createParticle(e.clientX, e.clientY);
-                canCreateParticle = false;
-                
-                setTimeout(() => {
-                    canCreateParticle = true;
-                }, 50);
-            }
-        };
-        
-        // Add event listener with passive option for better performance
-        document.addEventListener('mousemove', handleMouseMove, { passive: true });
-        
-        // Ensure container exists and is visible
-        trailContainer.style.pointerEvents = 'none';
-        trailContainer.style.position = 'fixed';
-        trailContainer.style.zIndex = '9999';
-    }
-    
     // Create random brass lines
     function createBrassLines() {
         const containers = document.querySelectorAll('.brass-lines-container');
@@ -731,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     createBrassLines();
     
-    // Add intersection observer for animations
+    // Add intersection observer for footer animations
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -750,6 +691,162 @@ document.addEventListener('DOMContentLoaded', function() {
     footerColumns.forEach(column => {
         observer.observe(column);
     });
+
+    // --- Draggable & Resizable Player Modal ---
+    const playerModal = document.getElementById('player-modal');
+    if (playerModal) {
+        const watchBtn = document.getElementById('watch-btn');
+        const closePlayerBtn = document.getElementById('close-player-modal-btn');
+        const popOutBtn = document.getElementById('pop-out-btn');
+        const header = playerModal.querySelector('.player-modal-header');
+        const iframeBlocker = playerModal.querySelector('.iframe-blocker');
+        const kickPlayer = document.getElementById('kick-player');
+
+        // --- Modal Control ---
+        watchBtn.addEventListener('click', () => {
+            playerModal.style.display = 'flex';
+        });
+
+        closePlayerBtn.addEventListener('click', () => {
+            playerModal.style.display = 'none';
+        });
+
+        popOutBtn.addEventListener('click', () => {
+            const modalRect = playerModal.getBoundingClientRect();
+            const features = `width=${modalRect.width},height=${modalRect.height},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`;
+            window.open(kickPlayer.src, 'KickPlayerPopup', features);
+            playerModal.style.display = 'none';
+        });
+        
+        // --- Draggable ---
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+
+            isDragging = true;
+            
+            const rect = playerModal.getBoundingClientRect();
+            const computedStyle = getComputedStyle(playerModal);
+
+            if (computedStyle.transform !== 'none') {
+                playerModal.style.left = `${rect.left}px`;
+                playerModal.style.top = `${rect.top}px`;
+                playerModal.style.transform = 'none';
+                playerModal.style.margin = '0';
+            }
+
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            iframeBlocker.style.display = 'block';
+            document.body.style.userSelect = 'none';
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        function onMouseMove(e) {
+            if (!isDragging) return;
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+            
+            newX = Math.max(0, Math.min(newX, window.innerWidth - playerModal.offsetWidth));
+            newY = Math.max(0, Math.min(newY, window.innerHeight - playerModal.offsetHeight));
+            
+            playerModal.style.left = `${newX}px`;
+            playerModal.style.top = `${newY}px`;
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+            iframeBlocker.style.display = 'none';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+        
+        // --- Resizable ---
+        const resizers = playerModal.querySelectorAll('.resizer');
+        let isResizing = false;
+
+        resizers.forEach(resizer => {
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                let currentResizer = e.target;
+                let prevX = e.clientX;
+                let prevY = e.clientY;
+                
+                iframeBlocker.style.display = 'block';
+                document.body.style.userSelect = 'none';
+
+                const modalRect = playerModal.getBoundingClientRect();
+
+                function onResize(e) {
+                    if (!isResizing) return;
+                    
+                    const dx = e.clientX - prevX;
+                    const dy = e.clientY - prevY;
+                    
+                    const minWidth = parseInt(getComputedStyle(playerModal, '').minWidth);
+                    const minHeight = parseInt(getComputedStyle(playerModal, '').minHeight);
+
+                    if (currentResizer.classList.contains('resizer-br')) {
+                        playerModal.style.width = Math.max(minWidth, modalRect.width + dx) + 'px';
+                        playerModal.style.height = Math.max(minHeight, modalRect.height + dy) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-b')) {
+                        playerModal.style.height = Math.max(minHeight, modalRect.height + dy) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-r')) {
+                        playerModal.style.width = Math.max(minWidth, modalRect.width + dx) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-tr')) {
+                         playerModal.style.width = Math.max(minWidth, modalRect.width + dx) + 'px';
+                         if (modalRect.height - dy >= minHeight) {
+                            playerModal.style.height = modalRect.height - dy + 'px';
+                            playerModal.style.top = modalRect.top + dy + 'px';
+                         }
+                    } else if (currentResizer.classList.contains('resizer-t')) {
+                         if (modalRect.height - dy >= minHeight) {
+                            playerModal.style.height = modalRect.height - dy + 'px';
+                            playerModal.style.top = modalRect.top + dy + 'px';
+                         }
+                    } else if (currentResizer.classList.contains('resizer-tl')) {
+                        if (modalRect.width - dx >= minWidth) {
+                            playerModal.style.width = modalRect.width - dx + 'px';
+                            playerModal.style.left = modalRect.left + dx + 'px';
+                        }
+                        if (modalRect.height - dy >= minHeight) {
+                            playerModal.style.height = modalRect.height - dy + 'px';
+                            playerModal.style.top = modalRect.top + dy + 'px';
+                        }
+                    } else if (currentResizer.classList.contains('resizer-l')) {
+                        if (modalRect.width - dx >= minWidth) {
+                            playerModal.style.width = modalRect.width - dx + 'px';
+                            playerModal.style.left = modalRect.left + dx + 'px';
+                        }
+                    } else if (currentResizer.classList.contains('resizer-bl')) {
+                        if (modalRect.width - dx >= minWidth) {
+                            playerModal.style.width = modalRect.width - dx + 'px';
+                            playerModal.style.left = modalRect.left + dx + 'px';
+                        }
+                        playerModal.style.height = Math.max(minHeight, modalRect.height + dy) + 'px';
+                    }
+                    playerModal.style.transform = '';
+                }
+
+                function onStopResize() {
+                    isResizing = false;
+                    iframeBlocker.style.display = 'none';
+                    document.body.style.userSelect = '';
+                    window.removeEventListener('mousemove', onResize);
+                    window.removeEventListener('mouseup', onStopResize);
+                }
+
+                window.addEventListener('mousemove', onResize);
+                window.addEventListener('mouseup', onStopResize);
+            });
+        });
+    }
 });
 
 // Add ripple animation keyframes via JavaScript
