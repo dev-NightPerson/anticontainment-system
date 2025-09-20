@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolving Labyrinth Cube</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+        }
+    }
+    </script>
+    <div id="info">
+    </div>
+</head>
+<body>
+    <div id="video-background-container">
+        <video id="local-video-player" loop muted playsinline></video>
+        <div id="youtube-player"></div>
+    </div>
+    <div id="ui-trigger">
+        <button id="open-modal-btn" class="hidden">Video Controls</button>
+    </div>
+
+    <div id="video-modal" class="hidden">
+        <div class="modal-content">
+            <button id="close-modal-btn" class="close-btn">&times;</button>
+            <h2>Background Video Controls</h2>
+
+            <div class="control-section">
+                <h3>Video Source</h3>
+                <label><input type="radio" name="video-source" id="source-youtube" checked> YouTube</label>
+                <label style="margin-left: 12px;"><input type="radio" name="video-source" id="source-local"> Local</label>
+            </div>
+
+            <div class="control-section">
+                <h3>Load Local Video</h3>
+                <input type="file" id="video-file-input" accept="video/*">
+            </div>
+
+            <div class="control-section">
+                <h3>YouTube Playlist</h3>
+                <div class="input-group">
+                    <input type="text" id="youtube-url-input" placeholder="Enter YouTube URL">
+                    <button id="add-youtube-btn">Add</button>
+                </div>
+                <ul id="playlist" class="sortable"></ul>
+            </div>
+
+            <div class="control-section">
+                <h3>Playback Controls</h3>
+                <div class="playback-controls">
+                    <button id="stop-video-btn">Turn Off Video</button>
+                    <button id="mute-btn">Unmute</button>
+                    <div class="volume-control">
+                        <label for="volume-slider">Volume:</label>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Performance</h3>
+                <label>
+                    <input type="checkbox" id="performance-toggle">
+                    Enable Performance Mode (favor FPS)
+                </label>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 6px;">
+                    Disables lasers and locks resolution to boost frame rate. Cubes, tethers, and stems remain prioritized.
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
