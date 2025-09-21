@@ -99,8 +99,9 @@ export class FractalStems {
         const seed = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1), bronzeMat);
         seed.visible = false; // Hide the static central cube
         this.group.add(seed);
-        this.branchGeom = new THREE.CylinderGeometry(0.01,0.01,1,16); this.branchGeom.translate(0,0.5,0);
-        const stemMaps = createStemMaps(256);
+        // Fewer radial segments to reduce GPU load
+        this.branchGeom = new THREE.CylinderGeometry(0.01,0.01,1,8); this.branchGeom.translate(0,0.5,0);
+        this._stemMaps = createStemMaps(256);
         this.branchMat = new THREE.MeshStandardMaterial({
             color: 0xffffff, // let the map define green tones
             emissive: 0x123f26,
@@ -109,8 +110,8 @@ export class FractalStems {
             roughness: 0.9,
             transparent: true,
             opacity: 1.0,
-            map: stemMaps.map,
-            bumpMap: stemMaps.bump,
+            map: this._stemMaps.map,
+            bumpMap: this._stemMaps.bump,
             bumpScale: 0.5
         });
         // Hair primitives (very light) reused across branches
@@ -131,6 +132,7 @@ export class FractalStems {
         this.lastSeedTime = performance.now();
         this.maxDepth = 7; this.delayStep = 700;
         this.maxBranches = 2500; this.seedCooldown = 900;
+        this._perfMode = false;
     }
     randomDir() {
         const v = new THREE.Vector3(Math.random()*2-1, Math.random()*2-1, Math.random()*2-1);
@@ -150,7 +152,8 @@ export class FractalStems {
     }
     spawnBranch(origin, dir, depth, maxDepth, startDelay, delayStep) {
         const len = 0.18 + Math.random()*0.35;
-        const mesh = new THREE.Mesh(this.branchGeom, this.branchMat.clone());
+        // Reuse shared material to reduce material count; fade will be handled by shrinking scale instead of opacity
+        const mesh = new THREE.Mesh(this.branchGeom, this.branchMat);
         const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
         mesh.quaternion.copy(q);
         mesh.position.copy(origin);
@@ -164,15 +167,20 @@ export class FractalStems {
         this.branches.push({
             mesh, hairs, length: len, origin: origin.clone(), dir: dir.clone(), depth,
             start: now + startDelay, growth: 4200 + Math.random()*4200,
-            hold: 1200 + Math.random()*1800, fade: 4800 + Math.random()*7200,
+            hold: (1200 + Math.random()*1800) * 4, fade: 4800 + Math.random()*7200,
             spawnedChildren: false,
             delayStep
         });
     }
     attachHairs(parentMesh, length, thickness) {
         // Count scales with thickness but stays lightweight
-        const count = Math.max(12, Math.floor(80 * thickness));
-        const inst = new THREE.InstancedMesh(this.hairGeom, this.hairMat, count);
+        let count = Math.max(12, Math.floor(80 * thickness));
+        // Under heavy load, reduce hair instances
+        if (this.branches.length > 1200) count = Math.floor(count * 0.6);
+        if (this.branches.length > 1800) count = Math.floor(count * 0.5);
+        // Clone hair material per branch so we can fade this branch's hairs independently
+        const inst = new THREE.InstancedMesh(this.hairGeom, this.hairMat.clone(), count);
+        inst.material.transparent = true;
         inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         const dummy = new THREE.Object3D();
         const radius = 0.01 * thickness;
@@ -225,19 +233,47 @@ export class FractalStems {
                 fadeK = fk*fk*(3-2*fk); // ease-in-out
             }
             const curLen = b.length * growK;
+            // Keep stems at full length once grown; do not recede during fade/hold
             b.mesh.scale.y = curLen;
-            b.mesh.material.opacity = 0.95 * (1 - fadeK);
+
+            // Gradual opacity fade during fade phase (per-branch clone-once)
+            if (t > hEnd) {
+                // Stem material
+                if (!b.mesh.material || !b.mesh.material._isClonedForFade) {
+                    const m = b.mesh.material = b.mesh.material.clone();
+                    m.transparent = true;
+                    m._isClonedForFade = true;
+                }
+                b.mesh.material.opacity = Math.max(0, 1 - fadeK);
+                // Hairs material
+                if (b.hairs && b.hairs.material) {
+                    if (!b.hairs.material._isClonedForFade) {
+                        const hm = b.hairs.material = b.hairs.material.clone();
+                        hm.transparent = true;
+                        hm._isClonedForFade = true;
+                    }
+                    b.hairs.material.opacity = Math.max(0, 1 - fadeK);
+                }
+            }
             
             // spawn Y branches when stem reaches full length
             if (b.depth < this.maxDepth && !b.spawnedChildren && growK >= 1.0) {
                 const endPoint = b.origin.clone().add(b.dir.clone().multiplyScalar(b.length));
-                const axis = this.randomDir(); // Use a fully random axis for more variation
-                const angle = 0.6 + Math.random()*0.7; // ~34 to ~74 degrees
+                const axis = this.randomDir();
+                const angle = 0.6 + Math.random()*0.7;
                 const d1 = b.dir.clone().applyAxisAngle(axis, angle).normalize();
                 const d2 = b.dir.clone().applyAxisAngle(axis, -angle).normalize();
-                const childDelay = 120 + Math.random()*260;
-                this.spawnBranch(endPoint, d1, b.depth+1, this.maxDepth, childDelay, b.delayStep);
-                this.spawnBranch(endPoint, d2, b.depth+1, this.maxDepth, childDelay, b.delayStep);
+                // Under heavy load, reduce branching fan-out
+                const many = this.branches.length > 1200;
+                const childDelay = (many ? 220 : 120) + Math.random()*(many ? 360 : 260);
+                if (many && Math.random() < 0.6) {
+                    // Spawn only one child to throttle
+                    const pick = Math.random() < 0.5 ? d1 : d2;
+                    this.spawnBranch(endPoint, pick, b.depth+1, this.maxDepth, childDelay, b.delayStep);
+                } else {
+                    this.spawnBranch(endPoint, d1, b.depth+1, this.maxDepth, childDelay, b.delayStep);
+                    this.spawnBranch(endPoint, d2, b.depth+1, this.maxDepth, childDelay, b.delayStep);
+                }
                 b.spawnedChildren = true;
             }
 

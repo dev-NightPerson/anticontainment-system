@@ -454,7 +454,7 @@ class CircuitryCube {
         glowGeometry.translate(0, 0.5, 0);
 
         const coreMaterial = new THREE.MeshBasicMaterial({
-            color: 0xfff6e5, // hot white core with slight warmth
+            color: 0xcd7f32, // bronze core
         });
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: 0xcd7f32, // bronze glow
@@ -794,8 +794,11 @@ class CenterCircuitAnimator {
         this.canvas.height = size;
         this.ctx = this.canvas.getContext('2d');
         this.texture = new THREE.CanvasTexture(this.canvas);
-        this.texture.minFilter = THREE.LinearFilter;
-        this.texture.magFilter = THREE.NearestFilter;
+        // Use smoother filtering to avoid pixelated edges
+        this.texture.generateMipmaps = true;
+        this.texture.minFilter = THREE.LinearMipmapLinearFilter;
+        this.texture.magFilter = THREE.LinearFilter;
+        this.texture.anisotropy = 8;
 
         this.nodes = [];
         for (let i = 0; i < 12; i++) {
@@ -890,7 +893,8 @@ class CenterCircuitAnimator {
 }
 
 function createCenterCircuitCube() {
-    centerCircuitAnimator = new CenterCircuitAnimator(128);
+    // Use a higher-resolution texture so the circuitry appears sharper
+    centerCircuitAnimator = new CenterCircuitAnimator(1024);
     const geo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
     const mat = new THREE.MeshStandardMaterial({
         map: centerCircuitAnimator.texture,
@@ -901,11 +905,74 @@ function createCenterCircuitCube() {
         roughness: 0.35,
         color: 0xffffff,
         alphaTest: 0.01, // discard fully transparent pixels in the texture window
-        transparent: true
+        transparent: true,
+        side: THREE.DoubleSide // render backfaces so the tiny cube is visible from inside
     });
     centerCube = new THREE.Mesh(geo, mat);
     centerCube.position.set(0, 0, 0);
     scene.add(centerCube);
+}
+
+// Add thin bronze frames around the alphaTest windows on each face of the tiny cube
+function createCenterWindowFrames() {
+    if (!centerCube) return;
+    if (centerWindowFrames) {
+        centerCube.remove(centerWindowFrames);
+        centerWindowFrames = null;
+    }
+    const cubeSize = 0.14; // must match center cube geometry
+    const half = cubeSize / 2;
+    const windowFrac = 0.34; // must match CenterCircuitAnimator window fraction
+    const winSize = cubeSize * windowFrac;
+    const halfWin = winSize / 2;
+    const frameThickness = 0.004; // thin frame bar thickness on face plane
+    const frameDepth = 0.006; // extrusion depth outward
+    const faceOffset = half + frameDepth / 2 + 0.0005; // slightly above surface
+
+    const frameMat = new THREE.MeshStandardMaterial({
+        color: 0xcd7f32,
+        metalness: 0.85,
+        roughness: 0.35,
+        emissive: 0x3b210e,
+        emissiveIntensity: 0.2
+    });
+
+    // Geometries: horizontal bars (width = winSize, height = thickness), vertical bars (width = thickness, height = winSize)
+    const horizGeo = new THREE.BoxGeometry(winSize, frameThickness, frameDepth);
+    const vertGeo = new THREE.BoxGeometry(frameThickness, winSize, frameDepth);
+
+    centerWindowFrames = new THREE.Group();
+
+    // Helper to build a face frame in +Z local orientation, then rotate/translate
+    function buildFace(normal) {
+        const g = new THREE.Group();
+        const top = new THREE.Mesh(horizGeo, frameMat);
+        top.position.set(0, halfWin + frameThickness / 2, 0);
+        const bottom = top.clone(); bottom.position.y = -top.position.y;
+        const left = new THREE.Mesh(vertGeo, frameMat);
+        left.position.set(-halfWin - frameThickness / 2, 0, 0);
+        const right = left.clone(); right.position.x = -left.position.x;
+        g.add(top, bottom, left, right);
+
+        // Orient to face normal and place outward
+        const n = normal.clone().normalize();
+        // Rotate: align group's +Z to n
+        const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1), n);
+        g.quaternion.copy(quat);
+        g.position.copy(n.multiplyScalar(faceOffset));
+        return g;
+    }
+
+    centerWindowFrames.add(
+        buildFace(new THREE.Vector3( 1, 0, 0)), // +X
+        buildFace(new THREE.Vector3(-1, 0, 0)), // -X
+        buildFace(new THREE.Vector3( 0, 1, 0)), // +Y
+        buildFace(new THREE.Vector3( 0,-1, 0)), // -Y
+        buildFace(new THREE.Vector3( 0, 0, 1)), // +Z
+        buildFace(new THREE.Vector3( 0, 0,-1))  // -Z
+    );
+
+    centerCube.add(centerWindowFrames);
 }
 
 function createCenterTethers(max = centerTetherMax) {
@@ -979,32 +1046,25 @@ function create9102Cube() {
         'assets/9102-2.png',
         'assets/9102-3.png',
         'assets/9102-4.png',
-        'assets/9102-5.png'
+        'assets/9102-5.png',
+        'assets/9102-6.png'
     ];
 
     const materials = [];
     for (let i = 0; i < 6; i++) {
-        if (i < 5) {
-            const url = imageUrls[i];
-            const tex = loader.load(url, (t) => {
-                t.colorSpace = THREE.SRGBColorSpace;
-                t.minFilter = THREE.LinearMipmapLinearFilter;
-                t.magFilter = THREE.LinearFilter;
-                t.anisotropy = 8;
-            });
-            materials.push(new THREE.MeshStandardMaterial({
-                map: tex,
-                metalness: 0.2,
-                roughness: 0.8,
-                emissive: 0x000000
-            }));
-        } else {
-            materials.push(new THREE.MeshStandardMaterial({
-                color: 0x000000,
-                metalness: 0.0,
-                roughness: 1.0
-            }));
-        }
+        const url = imageUrls[i];
+        const tex = loader.load(url, (t) => {
+            t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+            t.colorSpace = THREE.SRGBColorSpace;
+        });
+        materials.push(new THREE.MeshStandardMaterial({
+            map: tex,
+            emissiveMap: tex,
+            emissive: 0x333333,
+            emissiveIntensity: 0.6,
+            metalness: 0.2,
+            roughness: 0.8
+        }));
     }
 
     if (cube9102 && cube9102.parent) {
@@ -1025,6 +1085,7 @@ function create9102Cube() {
 // --- Three.js Scene Setup ---
 let scene, camera, renderer, cube, controls, innerCube;
 let centerCube, centerCircuitAnimator, centerTethers;
+let centerWindowFrames;
 let cube9102;
 let generator;
 const materials = [];
@@ -1034,6 +1095,9 @@ const contexts = [];
 const bumpCanvases = [];
 const bumpContexts = [];
 const bumpTextures = [];
+// References to wall materials so we can tweak bumpScale dynamically
+let wallMaterialsRef = [];
+let wallBackMaterialsRef = [];
 let directionalLight;
 let pointLight1, pointLight2, pointLight3, pointLight4;
 let pLight1Container, pLight2Container, pLight3Container, pLight4Container;
@@ -1055,14 +1119,26 @@ function applyPerformanceMode(on) {
     if (renderer) {
         renderer.setPixelRatio(performanceMode ? 1.0 : Math.min(1.5, window.devicePixelRatio || 1));
     }
-    // Hide heavy glow shells on lasers to reduce overdraw, keep core for tethers' positions
+    // Keep tethers alive: keep laser cores updating for anchor points, hide only glow shells
     if (innerCube && innerCube.laserGroup) {
         innerCube.laserGroup.children.forEach(group => {
             if (group && group.children && group.children.length >= 2) {
                 const glow = group.children[0];
-                if (glow && glow.material) glow.visible = !performanceMode;
+                if (glow) glow.visible = !performanceMode;
+                // keep core (group.children[1]) always present for tether endpoints
             }
         });
+    }
+    // Adjust wall bump intensity for cheaper shading
+    const frontBump = performanceMode ? 0.18 : 0.7;
+    const backBump = performanceMode ? 0.12 : 0.5;
+    wallMaterialsRef.forEach(m => { if (m) m.bumpScale = frontBump; });
+    wallBackMaterialsRef.forEach(m => { if (m) m.bumpScale = backBump; });
+    // Shrink/restore particle budget
+    applyParticleBudget();
+    // Stems: keep hairs but remove stem textures in performance mode
+    if (stems && typeof stems.setPerformanceMode === 'function') {
+        stems.setPerformanceMode(performanceMode);
     }
 }
 
@@ -1087,6 +1163,8 @@ let lastUpdateTime = 0;
 /* add stems handle */
 let stems;
 const updateInterval = 70; // ms between labyrinth updates (slightly slower to save CPU)
+// Dynamic particle pool size (shrinks in performance mode)
+let particleActiveCount = 0;
 
 // --- Video Background ---
 let youtubePlayer;
@@ -1097,12 +1175,48 @@ let currentVolume = 50;
 let youtubeReady = false, pendingStart = false;
 let userStoppedYoutube = false;
 let lastPlayedSource = null; // 'youtube' | 'local'
+// Interstellar background mode
+let interstellarGroup = null;
+let flashPool = [];
+let debugSphere = null;
+let interstellarActive = false;
+let boundaryGlobe = null;
+let BOUNDARY_RADIUS = 1000; // large, contains entire scene, but reachable so reflections are observable
 let youtubeWatchdogId = null;
 let ytLastTime = 0;
 let ytLastTs = 0;
 let ytLastState = null;
 let ytLastStateTs = 0;
 const YT_DEBUG = true;
+
+// --- YouTube playlist persistence (localStorage) ---
+const LS_KEYS = {
+    playlist: 'yt_playlist_urls',
+    index: 'yt_playlist_index'
+};
+
+function loadPlaylistFromStorage() {
+    try {
+        const raw = localStorage.getItem(LS_KEYS.playlist);
+        if (!raw) return false;
+        const ids = JSON.parse(raw);
+        if (!Array.isArray(ids) || !ids.length) return false;
+        playlist = ids.map(id => ({ id, title: `YouTube Video: ${id}` }));
+        const savedIndex = parseInt(localStorage.getItem(LS_KEYS.index) || '0', 10);
+        if (!Number.isNaN(savedIndex)) {
+            currentPlaylistIndex = Math.max(0, Math.min(savedIndex, playlist.length - 1));
+        }
+        return true;
+    } catch { return false; }
+}
+
+function savePlaylistToStorage() {
+    try {
+        const ids = playlist.map(v => v.id);
+        localStorage.setItem(LS_KEYS.playlist, JSON.stringify(ids));
+        localStorage.setItem(LS_KEYS.index, String(currentPlaylistIndex));
+    } catch {}
+}
 
 function setupVideoBackground() {
     const uiTrigger = document.getElementById('ui-trigger');
@@ -1113,12 +1227,14 @@ function setupVideoBackground() {
     const videoFileInput = document.getElementById('video-file-input');
     const youtubeUrlInput = document.getElementById('youtube-url-input');
     const addYoutubeBtn = document.getElementById('add-youtube-btn');
+    // Background source radios
+    const sourceYoutube = document.getElementById('source-youtube');
+    const sourceLocal = document.getElementById('source-local');
+    const sourceInterstellar = document.getElementById('source-interstellar');
     const playlistEl = document.getElementById('playlist');
     const stopVideoBtn = document.getElementById('stop-video-btn');
     const muteBtn = document.getElementById('mute-btn');
     const volumeSlider = document.getElementById('volume-slider');
-    const sourceYoutube = document.getElementById('source-youtube');
-    const sourceLocal = document.getElementById('source-local');
 
     // Disable YouTube controls until player is ready
     youtubeUrlInput.disabled = false;
@@ -1299,16 +1415,18 @@ function setupVideoBackground() {
             try { youtubePlayer.mute(); } catch {}
             youtubePlayer.loadVideoById(playlist[currentPlaylistIndex].id);
             try { youtubePlayer.playVideo(); } catch {}
+            savePlaylistToStorage();
         }
     }
     
     addYoutubeBtn.addEventListener('click', () => {
-        const url = youtubeUrlInput.value;
+        const url = youtubeUrlInput.value.trim();
         const videoId = getYouTubeID(url);
         if (videoId) {
             const title = `YouTube Video: ${videoId}`; // Could fetch title later if needed
             playlist.push({ id: videoId, title: title });
             renderPlaylist();
+            savePlaylistToStorage();
             if (playlist.length === 1) { // If it's the first video added
                 startYoutubePlayback();
             }
@@ -1375,12 +1493,14 @@ function setupVideoBackground() {
         try { youtubePlayer.playVideo(); } catch {}
         updateMuteState();
         lastPlayedSource = 'youtube';
+        savePlaylistToStorage();
     }
 
     function playYoutubeAt(index) {
         if (index < 0 || index >= playlist.length) return;
         currentPlaylistIndex = index;
         startYoutubePlayback();
+        savePlaylistToStorage();
     }
     
     function renderPlaylist() {
@@ -1415,6 +1535,8 @@ function setupVideoBackground() {
             li.appendChild(removeBtn);
             playlistEl.appendChild(li);
         });
+        // Persist after any re-render just in case indices changed
+        savePlaylistToStorage();
     }
     
     function removePlaylistItem(index) {
@@ -1431,6 +1553,7 @@ function setupVideoBackground() {
         }
         
         renderPlaylist();
+        savePlaylistToStorage();
     }
     
     // Playlist Drag and Drop
@@ -1464,8 +1587,9 @@ function setupVideoBackground() {
             } else if (dragStartIndex > currentPlaylistIndex && dropIndex <= currentPlaylistIndex) {
                 currentPlaylistIndex++;
             }
+            renderPlaylist();
+            savePlaylistToStorage();
         }
-        renderPlaylist();
     });
 
     function getDragAfterElement(container, y) {
@@ -1554,32 +1678,323 @@ function setupVideoBackground() {
 
     // Source switching
     function applySourceSelection() {
+        // Stop interstellar unless explicitly requested
+        if (typeof stopInterstellar === 'function') stopInterstellar();
         if (sourceYoutube && sourceYoutube.checked) {
+            // Show video container for video modes
+            const vc = document.getElementById('video-background-container');
+            vc && vc.classList.remove('hidden');
             // Prefer YouTube
             if (playlist.length > 0) {
                 startYoutubePlayback();
             } else {
                 // Hide local if was visible
                 localVideoPlayer.classList.add('hidden');
-                if (youtubePlayer) document.getElementById('youtube-player').classList.remove('hidden');
+                if (youtubePlayer) document.getElementById('youtube-player').classList.add('hidden');
             }
         } else if (sourceLocal && sourceLocal.checked) {
-            // Prefer Local
+            // Local video mode
+            const vc = document.getElementById('video-background-container');
+            vc && vc.classList.remove('hidden');
+            document.getElementById('youtube-player').classList.add('hidden');
             if (localVideoPlayer.src) {
-                stopAllVideo();
                 localVideoPlayer.classList.remove('hidden');
                 localVideoPlayer.play();
-                updateMuteState();
-                lastPlayedSource = 'local';
             } else {
                 // No local selected; just stop YouTube if any
                 if (youtubePlayer) document.getElementById('youtube-player').classList.add('hidden');
             }
+        } else if (sourceInterstellar && sourceInterstellar.checked) {
+            // Start interstellar mode
+            stopAllVideo();
+            if (typeof startInterstellar === 'function') startInterstellar();
+            lastPlayedSource = 'interstellar';
+            // Hide entire video container so canvas is unobstructed
+            const vc = document.getElementById('video-background-container');
+            vc && vc.classList.add('hidden');
         }
     }
 
     if (sourceYoutube) sourceYoutube.addEventListener('change', applySourceSelection);
     if (sourceLocal) sourceLocal.addEventListener('change', applySourceSelection);
+    if (sourceInterstellar) sourceInterstellar.addEventListener('change', applySourceSelection);
+
+    // Load playlist from storage, or seed with provided default if none
+    const hadStorage = loadPlaylistFromStorage();
+    if (!hadStorage) {
+        const seedUrl = 'https://www.youtube.com/watch?v=IWVJq-4zW24&list=RDIWVJq-4zW24';
+        const seedId = getYouTubeID(seedUrl);
+        if (seedId) {
+            playlist = [{ id: seedId, title: `YouTube Video: ${seedId}` }];
+            currentPlaylistIndex = 0;
+            savePlaylistToStorage();
+        }
+    }
+    // Render initial playlist UI
+    if (typeof renderPlaylist === 'function') {
+        try { renderPlaylist(); } catch {}
+    }
+
+    // Initialize YouTube API if not already
+    function onYouTubeIframeAPIReady() {
+        createYouTubePlayer();
+    };
+
+    // Also attempt immediate creation in case API already loaded
+    createYouTubePlayer();
+
+    function onPlayerReady(event) {
+        youtubeReady = true;
+        // Ensure controls are enabled once ready
+        youtubeUrlInput.disabled = false;
+        addYoutubeBtn.disabled = false;
+        youtubePlayer.setVolume(currentVolume);
+        if (playlist.length > 0 && (pendingStart || !document.getElementById('youtube-player').classList.contains('hidden'))) {
+            pendingStart = false;
+            startYoutubePlayback();
+        }
+    }
+
+    // Default selection on first load: prefer YouTube mode
+    setTimeout(() => {
+        if (sourceYoutube) {
+            sourceYoutube.checked = true;
+            if (sourceLocal) sourceLocal.checked = false;
+            if (sourceInterstellar) sourceInterstellar.checked = false;
+        }
+        applySourceSelection();
+    }, 0);
+}
+
+// ---------------- Interstellar Background -----------------
+function createInterstellar() {
+    // Add a debug sphere to visualize impact points
+    if (!debugSphere) {
+        const sphereGeo = new THREE.SphereGeometry(5.0, 16, 16);
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.5 });
+        debugSphere = new THREE.Mesh(sphereGeo, sphereMat);
+        debugSphere.visible = false;
+        scene.add(debugSphere);
+    }
+
+    // Initialize a pool of point lights for impact flashes
+    for (let i = 0; i < 10; i++) {
+        const flash = new THREE.PointLight(0xffffff, 0, 10);
+        flash.visible = false;
+        flashPool.push(flash);
+        scene.add(flash);
+    }
+    if (interstellarGroup) return interstellarGroup;
+    const group = new THREE.Group();
+    group.name = 'InterstellarBackground';
+    group.frustumCulled = false;
+    
+    // Helpers: circular sprite + asteroid geometry
+    function makeCircleTexture(d = 64) {
+        const c = document.createElement('canvas');
+        c.width = c.height = d;
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0,0,d,d);
+        const r = d/2;
+        const g = ctx.createRadialGradient(r, r, r*0.1, r, r, r);
+        g.addColorStop(0, 'rgba(255,255,255,1.0)');
+        g.addColorStop(0.7, 'rgba(255,255,255,0.7)');
+        g.addColorStop(1, 'rgba(255,255,255,0.0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(r, r, r, 0, Math.PI*2); ctx.fill();
+        const tex = new THREE.CanvasTexture(c);
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = true;
+        tex.anisotropy = 8;
+        return tex;
+    }
+    function makeAsteroidGeometry(radius = 0.28, detail = 2) {
+        const geo = new THREE.IcosahedronGeometry(radius, detail);
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            const nx = pos.getX(i);
+            const ny = pos.getY(i);
+            const nz = pos.getZ(i);
+            const len = Math.max(0.0001, Math.sqrt(nx*nx+ny*ny+nz*nz));
+            const ox = nx/len, oy = ny/len, oz = nz/len;
+            const noise = (Math.random()*0.22 - 0.11); // +/-
+            pos.setXYZ(i, nx + ox*noise, ny + oy*noise, nz + oz*noise);
+        }
+        pos.needsUpdate = true;
+        geo.computeVertexNormals();
+        return geo;
+    }
+
+    // Stars are baked into scene.background for realism and to always remain behind the cubes
+
+    // No near star shell; keep background stars static in the background texture
+
+    // Bronze-tinted Oort cloud dust (tiny)
+    const dustCount = 2500;
+    const dustGeom = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+        const r = 12 + Math.random() * 25;
+        const theta = Math.acos(2 * Math.random() - 1);
+        const phi = Math.random() * Math.PI * 2;
+        dustPos[i * 3 + 0] = r * Math.sin(theta) * Math.cos(phi);
+        dustPos[i * 3 + 1] = r * Math.cos(theta);
+        dustPos[i * 3 + 2] = r * Math.sin(theta) * Math.sin(phi);
+    }
+    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dustSprite = makeCircleTexture(64);
+    const dustMat = new THREE.PointsMaterial({ color: 0xcd7f32, map: dustSprite, size: 0.012, sizeAttenuation: true, transparent: true, opacity: 0.35, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, alphaTest: 0.01 });
+    group.add(new THREE.Points(dustGeom, dustMat));
+
+    // Sun removed per request
+
+    // Boundary globe (initially invisible, toggle from UI)
+    function createBoundaryStarTexture(w=1024,h=512){
+        const c=document.createElement('canvas'); c.width=w; c.height=h; const ctx=c.getContext('2d');
+        // Transparent background; draw only stars with solid cores
+        const draw=(x,y,r)=>{ const g=ctx.createRadialGradient(x,y,r*0.1,x,y,r); g.addColorStop(0,'rgba(255,255,255,1.0)'); g.addColorStop(1,'rgba(255,255,255,0.0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); };
+        // dense field of small stars (smaller sizes)
+        for(let i=0;i<8000;i++){ draw(Math.random()*w,Math.random()*h, Math.random()<0.995?0.35+Math.random()*0.45:0.9+Math.random()*0.6); }
+        // a few bright highlights (still small)
+        for(let i=0;i<80;i++){ draw(Math.random()*w,Math.random()*h, 1.2+Math.random()*0.8); }
+        const tex=new THREE.CanvasTexture(c); tex.generateMipmaps=true; tex.minFilter=THREE.LinearMipmapLinearFilter; tex.magFilter=THREE.LinearFilter; tex.anisotropy=8; return tex;
+    }
+    if (!boundaryGlobe){
+        const geo = new THREE.SphereGeometry(BOUNDARY_RADIUS, 64, 64);
+        const mat = new THREE.MeshBasicMaterial({ map: createBoundaryStarTexture(4096,2048), side: THREE.BackSide, transparent: true, opacity: 1.0, depthWrite: false, blending: THREE.NormalBlending, alphaTest: 0.02 });
+        boundaryGlobe = new THREE.Mesh(geo, mat);
+        boundaryGlobe.name = 'BoundaryGlobe';
+        boundaryGlobe.visible = false; // default off
+        scene.add(boundaryGlobe);
+    }
+
+    // Realistic cratered asteroids with refined physics
+    const asteroids = new THREE.Group();
+    const baseAsteroidMat = new THREE.MeshStandardMaterial({ color: 0x8b6b3d, metalness: 0.05, roughness: 1.0, transparent: false });
+    function makeAsteroidMesh(radius=0.32){
+        const geo = new THREE.IcosahedronGeometry(radius, 4); // more faces for smoother base
+        const pos = geo.attributes.position;
+        // choose crater centers once to avoid artifacts/holes
+        const craterCenters = [];
+        const craterCount = 24 + Math.floor(Math.random()*12); // more crater centers
+        for (let i=0;i<craterCount;i++) craterCenters.push(new THREE.Vector3().randomDirection());
+        for(let i=0;i<pos.count;i++){
+            const vx = pos.getX(i), vy = pos.getY(i), vz = pos.getZ(i);
+            const v = new THREE.Vector3(vx,vy,vz);
+            const n = v.clone().normalize();
+            // base roughness
+            const rx = vx, ry = vy, rz = vz;
+            // multi-scale ridges for less round silhouettes
+            let d = 0.0;
+            d += (Math.sin(rx*2.2)+Math.sin(ry*2.6)+Math.sin(rz*2.1))*0.030;
+            d += (Math.sin(rx*4.1)+Math.sin(ry*3.7)+Math.sin(rz*3.9))*0.022;
+            d += (Math.sin(rx*7.3)+Math.sin(ry*6.7)+Math.sin(rz*6.1))*0.014;
+            // apply crater depressions by angular proximity to crater centers
+            for (const c of craterCenters) {
+                const dotv = Math.max(-1, Math.min(1, n.dot(c)));
+                const ang = Math.acos(dotv); // 0..pi
+                const falloff = Math.max(0.0, 1.0 - (ang/0.30));
+                if (falloff>0.0) d -= falloff*0.085;
+            }
+            v.addScaledVector(n, d);
+            pos.setXYZ(i, v.x, v.y, v.z);
+        }
+        pos.needsUpdate = true;
+        geo.computeVertexNormals();
+        const mat = baseAsteroidMat.clone();
+        mat.color.offsetHSL((Math.random()-0.5)*0.03, (Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.userData.radius = radius;
+        // opaque only
+        return mesh;
+    }
+    const asteroidObjs = [];
+    const AST_COUNT = 18; // +50%
+    const halfCube = (typeof CUBE_SIZE === 'number') ? (CUBE_SIZE/2) : 0.9;
+    for(let i=0;i<AST_COUNT;i++){
+        // Spawn just outside the cube surface so they frequently make contact
+        const dir = new THREE.Vector3().randomDirection();
+        const dist = halfCube + 0.35 + Math.random()*0.9; // ~1.225 .. 2.025 from center
+        const radius = 0.28 + Math.random()*0.18;
+        const mesh = makeAsteroidMesh(radius);
+        mesh.position.copy(dir.multiplyScalar(dist));
+        mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+        const vel = new THREE.Vector3((Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05); // faster for more impacts
+        mesh.userData.vel = vel;
+        mesh.userData.lastSplitTs = 0;
+        asteroids.add(mesh);
+        asteroidObjs.push(mesh);
+    }
+    group.add(asteroids);
+
+    // expose generator so animate() can create fragments with the same high-quality shape
+    group.userData = { dust: true, asteroids, asteroidObjs, makeAsteroidMesh };
+    interstellarGroup = group;
+    return interstellarGroup;
+}
+
+function startInterstellar() {
+    interstellarActive = true;
+    const g = createInterstellar();
+    if (!scene.getObjectByName('InterstellarBackground')) {
+        scene.add(g);
+    }
+    // Set starfield as normal scene background; sun removed
+    const starfieldTex = createStarfieldBackgroundTexture(2048, 1024);
+    scene.background = starfieldTex;
+    // Wire Interstellar options (boundary globe toggle)
+    setupInterstellarOptions();
+}
+
+function stopInterstellar() {
+    interstellarActive = false;
+    if (interstellarGroup && interstellarGroup.parent) {
+        interstellarGroup.parent.remove(interstellarGroup);
+    }
+    // Restore transparent background
+    scene.background = null;
+    if (boundaryGlobe) boundaryGlobe.visible = false;
+}
+
+// Wire Interstellar options in modal (global scope)
+function setupInterstellarOptions() {
+    const chk = document.getElementById('toggle-boundary-globe');
+    if (!chk) return;
+    // Initialize visibility from checkbox state
+    if (boundaryGlobe) boundaryGlobe.visible = !!chk.checked;
+    // Bind change handler
+    chk.onchange = (e) => {
+        const on = !!e.target.checked;
+        if (boundaryGlobe) boundaryGlobe.visible = on;
+    };
+}
+
+function createStarfieldBackgroundTexture(w = 2048, h = 1024) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+    // Round stars
+    function drawStar(cx, cy, r, a) {
+        const g = ctx.createRadialGradient(cx, cy, r*0.1, cx, cy, r);
+        g.addColorStop(0, `rgba(255,255,255,${a})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+    }
+    const count = 5000;
+    for (let i=0;i<count;i++) {
+        const x = Math.random()*w;
+        const y = Math.random()*h;
+        const r = Math.random() < 0.995 ? 0.8 + Math.random()*0.8 : 1.5 + Math.random()*1.5;
+        const a = 0.4 + Math.random()*0.6;
+        drawStar(x, y, r, a);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.anisotropy = 8;
+    return tex;
 }
 
 function createCircuitTexture(size = 64) {
@@ -1664,6 +2079,8 @@ function createParticleCubes() {
     
     particleCubes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     scene.add(particleCubes);
+    // Apply current particle budget (performance mode aware)
+    applyParticleBudget();
 }
 
 function createTetherLines() {
@@ -1695,12 +2112,16 @@ function updateTetherLines(particlePositions, time) {
     const connectionDistance = 1.8; // How close particles need to be to connect
     const maxConnections = 60; // Hard cap on connections to prevent visual clutter
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const N = particlePositions.length; // respect active particle budget
+    for (let i = 0; i < N; i++) {
         // Optimization: check a subset of other particles to avoid N^2
-        for (let j = i + 1; j < Math.min(i + 15, PARTICLE_COUNT); j++) {
+        for (let j = i + 1; j < Math.min(i + 15, N); j++) {
             const p1 = particlePositions[i];
             const p2 = particlePositions[j];
-            const dist = p1.distanceTo(p2);
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dz = p1.z - p2.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
             if (dist < connectionDistance && connections < maxConnections) {
                 const vec = p2.clone().sub(p1); // Vector from p1 to p2
@@ -1760,7 +2181,8 @@ function updateParticleCubes(time) {
     
     const particlePositions = [];
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const limit = particleActiveCount || PARTICLE_COUNT;
+    for (let i = 0; i < limit; i++) {
         particleCubes.getMatrixAt(i, dummy.matrix);
         dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
 
@@ -1785,7 +2207,17 @@ function updateParticleCubes(time) {
         particlePositions.push(dummy.position.clone());
     }
     particleCubes.instanceMatrix.needsUpdate = true;
+    if (particleCubes.count !== limit) particleCubes.count = limit;
     updateTetherLines(particlePositions, time);
+}
+
+function applyParticleBudget() {
+    const desired = performanceMode ? Math.max(50, Math.floor(PARTICLE_COUNT * 0.5)) : PARTICLE_COUNT;
+    particleActiveCount = desired;
+    if (particleCubes) {
+        particleCubes.count = desired;
+        particleCubes.instanceMatrix.needsUpdate = true;
+    }
 }
 
 function init() {
@@ -1794,7 +2226,7 @@ function init() {
     scene.background = null;
 
     // Camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
     camera.position.z = 2.5;
 
     // Renderer
@@ -2030,8 +2462,8 @@ function init() {
 
     createLabyrinthWalls();
 
-    // Inner Cube
-    innerCube = new CircuitryCube(1.7);
+    // Inner Cube (higher-res textures for less pixelation)
+    innerCube = new CircuitryCube(1.7, 1024);
     cube.add(innerCube.mesh); // Add as a child to the labyrinth cube
     /* add fractal stems inside the inner cube */
     stems = new FractalStems(innerCube.mesh);
@@ -2087,6 +2519,10 @@ function createLabyrinthWalls() {
         wallBackMaterials.push(wbm);
     }
 
+    // keep refs for live tuning
+    wallMaterialsRef = wallMaterials;
+    wallBackMaterialsRef = wallBackMaterials;
+
     const maxWallsPerFace = MAZE_SIZE * MAZE_SIZE;
     wallMeshes = [];
     wallBackMeshes = [];
@@ -2101,6 +2537,28 @@ function createLabyrinthWalls() {
         cube.add(instancedBackMesh);
         wallBackMeshes.push(instancedBackMesh);
     }
+
+    // After building the labyrinth cube, compute its local-space AABB extents for robust collisions
+    try {
+        const inv = new THREE.Matrix4().copy(cube.matrixWorld).invert();
+        const bbWorld = new THREE.Box3().setFromObject(cube);
+        // Transform world AABB corners into cube-local and rebuild a local AABB
+        const corners = [
+            new THREE.Vector3(bbWorld.min.x, bbWorld.min.y, bbWorld.min.z),
+            new THREE.Vector3(bbWorld.min.x, bbWorld.min.y, bbWorld.max.z),
+            new THREE.Vector3(bbWorld.min.x, bbWorld.max.y, bbWorld.min.z),
+            new THREE.Vector3(bbWorld.min.x, bbWorld.max.y, bbWorld.max.z),
+            new THREE.Vector3(bbWorld.max.x, bbWorld.min.y, bbWorld.min.z),
+            new THREE.Vector3(bbWorld.max.x, bbWorld.min.y, bbWorld.max.z),
+            new THREE.Vector3(bbWorld.max.x, bbWorld.max.y, bbWorld.min.z),
+            new THREE.Vector3(bbWorld.max.x, bbWorld.max.y, bbWorld.max.z),
+        ];
+        const bbLocal = new THREE.Box3();
+        for (const c of corners) { c.applyMatrix4(inv); bbLocal.expandByPoint(c); }
+        const extents = bbLocal.getSize(new THREE.Vector3()).multiplyScalar(0.5);
+        cube.userData = cube.userData || {};
+        cube.userData.localExtents = extents;
+    } catch {}
 }
 
 function updateLabyrinthWalls() {
@@ -2172,6 +2630,13 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // resize post targets if present
+    if (window.mainRT) {
+        window.mainRT.setSize(window.innerWidth, window.innerHeight);
+        if (window.compMat) {
+            window.compMat.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+        }
+    }
 }
 
 function updateLabyrinths() {
@@ -2259,9 +2724,196 @@ function animate(time) {
         directionalLight.position.copy(camera.position);
     }
 
+    // Interstellar background animation & physics
+    if (interstellarActive && interstellarGroup) {
+        const { sun3D, asteroids, asteroidObjs } = interstellarGroup.userData || {};
+        // Animate sun shader time
+        if (sun3D?.userData?.sunMesh?.material) {
+            sun3D.userData.sunMesh.material.uniforms.uTime.value = now * 0.0015;
+        }
+        if (sun3D?.userData?.corona?.material) {
+            sun3D.userData.corona.material.uniforms.uTime.value = now * 0.0015;
+        }
+        // Sun self-spin (not orbiting around the cubes)
+        if (sun3D) {
+            sun3D.rotation.y += 0.0005;
+        }
+
+        // Animate debug sphere
+        if (debugSphere && debugSphere.visible) {
+            if (debugSphere.userData.lifetime > 0) {
+                debugSphere.userData.lifetime--;
+            } else {
+                debugSphere.visible = false;
+            }
+        }
+
+        // Animate impact flashes
+        for (const flash of flashPool) {
+            if (flash.visible && flash.userData.lifetime > 0) {
+                flash.userData.lifetime--;
+                flash.intensity *= 0.85; // Fade out
+                if (flash.userData.lifetime <= 0) {
+                    flash.visible = false;
+                }
+            }
+        }
+        // Asteroid physics
+        if (asteroids && Array.isArray(asteroidObjs)) {
+            const maxCount = 36;
+            const raycaster = new THREE.Raycaster();
+
+            for (let i = asteroidObjs.length - 1; i >= 0; i--) {
+                const m = asteroidObjs[i];
+                const ud = m.userData || {};
+                const v = ud.vel;
+                if (!v) continue;
+
+                // Spin
+                m.rotation.x += 0.002 + (ud.radius || 0.2) * 0.001;
+                m.rotation.y += 0.0015;
+
+                const r = ud.radius || 0.25;
+                const prevPos = m.position.clone();
+                const nextPos = m.position.clone().add(v);
+                const rayDir = v.clone().normalize();
+                const rayLen = v.length();
+
+                let collisionHandled = false;
+                if (typeof cube !== 'undefined' && cube && rayLen > 0) {
+                    raycaster.set(prevPos, rayDir);
+                    raycaster.far = rayLen + r;
+                    const intersects = raycaster.intersectObject(cube, true);
+
+                    if (intersects.length > 0 && intersects[0].distance <= rayLen + r) {
+                        const hit = intersects[0];
+                        const normal = hit.face.normal.clone();
+
+                        // Move the impact point significantly outside the surface to prevent visual penetration
+                        const impactPoint = hit.point.clone().addScaledVector(normal, 1.5);
+                        m.position.copy(impactPoint);
+
+                        const currentGeneration = ud.generation || 1;
+
+                        // On impact, split unless the asteroid is 6th generation or older.
+                        if (currentGeneration < 6 && asteroidObjs.length < maxCount) {
+                            // --- TRIGGER FLASH ---
+                            const flash = flashPool.find(f => !f.visible);
+                            if (flash) {
+                                flash.position.copy(impactPoint);
+                                flash.intensity = 200; // Bright flash
+                                flash.userData.lifetime = 15; // Frames to live
+                                flash.visible = true;
+                            }
+                            // --- DEBUG VISUALIZER ---
+                            if (debugSphere) {
+                                debugSphere.position.copy(impactPoint);
+                                debugSphere.visible = true;
+                                debugSphere.userData.lifetime = 30; // Show for 30 frames
+                            }
+
+                            // --- SPLIT LOGIC ---
+                            const mk = interstellarGroup.userData?.makeAsteroidMesh;
+                            const mat = m.material;
+                            const newRad = r * 0.55;
+                            const m1 = mk ? mk(newRad) : new THREE.Mesh(new THREE.IcosahedronGeometry(newRad, 5), mat);
+                            const m2 = mk ? mk(newRad) : new THREE.Mesh(new THREE.IcosahedronGeometry(newRad, 5), mat);
+                            if (!mk) { m1.material = mat; m2.material = mat; }
+
+                            m1.position.copy(impactPoint);
+                            m2.position.copy(impactPoint);
+
+                            const baseSpeed = v.length();
+                            const reflectedVel = v.clone().reflect(normal);
+                            const v1 = reflectedVel.clone().addScaledVector(normal, 0.2).setLength(baseSpeed * 0.6);
+                            const v2 = reflectedVel.clone().addScaledVector(normal, 0.2).setLength(baseSpeed * 0.6);
+                            const randomVec = new THREE.Vector3().randomDirection().multiplyScalar(0.015);
+                            v1.add(randomVec);
+                            v2.sub(randomVec);
+
+                            m1.userData = { radius: newRad, vel: v1, lastSplitTs: now, generation: currentGeneration + 1 };
+                            m2.userData = { radius: newRad, vel: v2, lastSplitTs: now, generation: currentGeneration + 1 };
+
+                            asteroids.add(m1, m2);
+                            asteroidObjs.push(m1, m2);
+                        } else if (currentGeneration >= 6) {
+                            // --- POPULATION REPLACEMENT LOGIC ---
+                            const spawnAsteroid = interstellarGroup.userData?.spawnAsteroid;
+                            if (spawnAsteroid) {
+                                spawnAsteroid(true); // Spawn one new large asteroid at the boundary
+                            }
+                        }
+                        // Always remove the original asteroid on impact.
+                        asteroids.remove(m);
+                        asteroidObjs.splice(i, 1);
+                        collisionHandled = true;
+                    }
+                }
+
+                if (!collisionHandled) {
+                    m.position.copy(nextPos);
+                }
+
+                // Boundary globe reflect
+                const R = m.position.length();
+                if (R + r > BOUNDARY_RADIUS) {
+                    const n = m.position.clone().normalize();
+                    const speed = v.length();
+                    const vn = n.clone().multiplyScalar(v.dot(n));
+                    const vt = v.clone().sub(vn);
+                    v.copy(vt.sub(vn));
+                    if (v.length() > 1e-6) v.setLength(speed);
+                    m.position.copy(n.multiplyScalar(BOUNDARY_RADIUS - r - 0.02));
+                }
+            }
+            // Simple collision detection & splitting
+            for (let i = 0; i < asteroidObjs.length; i++) {
+                const a = asteroidObjs[i]; const ua = a.userData; if (!ua) continue;
+                for (let j = i+1; j < asteroidObjs.length; j++) {
+                    const b = asteroidObjs[j]; const ub = b.userData; if (!ub) continue;
+                    const dist = a.position.distanceTo(b.position);
+                    const sumR = (ua.radius||0.25) + (ub.radius||0.25);
+                    if (dist < sumR) {
+                        // Separate a bit
+                        const n = b.position.clone().sub(a.position).normalize();
+                        a.position.addScaledVector(n, -0.02);
+                        b.position.addScaledVector(n, 0.02);
+                        // Split larger one if budget allows
+                        if (asteroidObjs.length < maxCount) {
+                            const target = (ua.radius > ub.radius) ? a : b;
+                            const ut = target.userData; const rad = ut.radius || 0.25;
+                            if (rad > 0.18 && (now - (ut.lastSplitTs||0) > 800)) {
+                                ut.lastSplitTs = now;
+                                // remove target
+                                asteroids.remove(target);
+                                const idx = asteroidObjs.indexOf(target);
+                                if (idx >= 0) asteroidObjs.splice(idx,1);
+                                // create two fragments using the high-quality generator
+                                const newRad = rad * 0.68;
+                                if (newRad >= 0.14) {
+                                    const mk = interstellarGroup.userData?.makeAsteroidMesh;
+                                    const baseMat = asteroids.children[0]?.material || new THREE.MeshStandardMaterial({color:0x8b6b3d, metalness:0.1, roughness:0.95});
+                                    const m1 = mk ? mk(newRad) : new THREE.Mesh(new THREE.IcosahedronGeometry(newRad,3), baseMat);
+                                    const m2 = mk ? mk(newRad) : new THREE.Mesh(new THREE.IcosahedronGeometry(newRad,3), baseMat);
+                                    if (!mk) { m1.material = baseMat; m2.material = baseMat; }
+                                    m1.position.copy(target.position); m2.position.copy(target.position);
+                                    const dir = new THREE.Vector3().randomDirection();
+                                    const base = ut.vel ? ut.vel.clone() : new THREE.Vector3();
+                                    m1.userData = { radius: newRad, vel: base.clone().addScaledVector(dir, 0.02), lastSplitTs: now };
+                                    m2.userData = { radius: newRad, vel: base.clone().addScaledVector(dir, -0.02), lastSplitTs: now };
+                                    asteroids.add(m1); asteroids.add(m2);
+                                    asteroidObjs.push(m1, m2);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Adaptive resolution scaling to maintain frame rate (disabled in performance mode)
     if (!performanceMode) {
-        if (!animate.lastFpsCheck) animate.lastFpsCheck = now;
         if (!animate.frameCount) animate.frameCount = 0;
         animate.frameCount++;
         const checkWindow = 750; // ms
@@ -2281,12 +2933,31 @@ function animate(time) {
     }
 
     controls.update();
-    renderer.render(scene, camera);
+    // Depth-aware composite pipeline when Interstellar is active
+    if (interstellarActive && window.sunScene && window.mainRT && window.compScene && window.compMat && window.compCam) {
+        renderer.autoClear = false;
+        renderer.clear();
+        // 1) Render sun + starfield to screen
+        renderer.render(window.sunScene, camera);
+        // 2) Render main scene to RT with depth
+        renderer.setRenderTarget(window.mainRT);
+        renderer.clear(true, true, true);
+        renderer.render(scene, camera);
+        renderer.setRenderTarget(null);
+        // 3) Composite only where depth indicates geometry
+        window.compMat.uniforms.tColor.value = window.mainRT.texture;
+        window.compMat.uniforms.tDepth.value = window.mainRT.depthTexture;
+        renderer.render(window.compScene, window.compCam);
+    } else {
+        controls.update();
+        renderer.render(scene, camera);
+    }
 }
 
 init();
 // Tiny center cube with animated circuitry and bronze energy theme
 createCenterCircuitCube();
+createCenterWindowFrames();
 create9102Cube();
 createCenterTethers();
 setupVideoBackground();
