@@ -145,7 +145,13 @@
     /* Always show cursor over UI elements */
     .dock-zone, .panel, .panel * { cursor: auto !important; }
     .panel button, .panel .pill, .panel label { cursor: pointer; }
-    .panel input[type="text"], .panel input[type="number"], .panel input[type="range"], .panel select { cursor: auto; }
+    .panel input[type="text"], .panel input[type="number"], .panel input[type="range"], .panel select, .panel textarea { cursor: auto; }
+    /* Themed scrollbar for preview */
+    #msgPreviewBox .scrollbox { scrollbar-width: thin; scrollbar-color: rgba(186,120,72,0.6) rgba(30,24,18,0.6); }
+    #msgPreviewBox .scrollbox::-webkit-scrollbar { width: 8px; }
+    #msgPreviewBox .scrollbox::-webkit-scrollbar-track { background: rgba(30,24,18,0.6); border-radius: 8px; }
+    #msgPreviewBox .scrollbox::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(240,170,100,0.35), rgba(186,120,72,0.65)); border-radius: 8px; border: 1px solid rgba(255,200,150,0.25); }
+    #msgPreviewBox .scrollbox::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(240,170,100,0.5), rgba(186,120,72,0.85)); }
     /* Future modals and overlays should also show cursor */
     .overlay, .overlay * { cursor: auto !important; }
     /* Message overlay */
@@ -154,6 +160,7 @@
       color: #f0c99b; opacity: 0.0; font-weight: 800; letter-spacing: 0.02em;
       font-family: Impact, Haettenschweiler, 'Arial Black', 'Segoe UI Black', sans-serif;
       text-transform: uppercase;
+      white-space: pre-line;
       /* strong multi-layer glow and dark separation */
       -webkit-text-stroke: 1px rgba(0,0,0,0.65);
       text-shadow:
@@ -198,6 +205,9 @@
     .overlay.band-off .marquee::before { display: none; }
     .overlay.stroke-off .message-paragraph, .overlay.stroke-off .marquee span { -webkit-text-stroke: 0 transparent; }
     .overlay.glow-off .message-paragraph, .overlay.glow-off .marquee span { text-shadow: none; filter: none; }
+    /* Border for marquee band when border option enabled */
+    .overlay.backdrop-border .marquee::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      border: var(--msgBackdropBorderWidth, 0px) solid var(--msgBackdropBorderColor, rgba(186,120,72,0.4)); border-radius: 6px; }
     /* Hover/tap to reveal */
     @media (hover:hover) {
       .dock-zone:hover + .panel { bottom: 0; }
@@ -233,6 +243,16 @@
     .video-window.maximized .content { top: 0; }
     /* Restore button styling */
     #btnRestoreVideo { width: 64px; height: 64px; border-radius: 50%; background: rgba(25,20,15,0.92); border: 1px solid rgba(255,200,150,0.45); color: #e7c39a; font-weight: 900; font-size: 22px; box-shadow: 0 10px 26px rgba(0,0,0,0.6); }
+    /* Distinct on/off styles for player toggles */
+    #btnShuffle.active, #btnRepeat.active, #btnRepeat1.active {
+      background: rgba(255,200,150,0.22);
+      border: 1px solid rgba(255,200,150,0.7);
+      box-shadow: 0 0 0 2px rgba(255,200,150,0.18) inset, 0 8px 18px rgba(0,0,0,0.45);
+      color: #f6dcb8;
+      transform: translateY(-1px);
+    }
+    #btnShuffle.overridden, #btnRepeat.overridden { opacity: 0.35; filter: grayscale(100%); }
+    #btnShuffle:disabled, #btnRepeat:disabled { opacity: 0.3 !important; filter: grayscale(100%) !important; cursor: not-allowed; }
     #btnRestoreVideo:hover { transform: translateX(-50%) scale(1.06); }
   </style>
   <style>
@@ -271,6 +291,7 @@
     </div>
     <div class="content">
       <div id="videoOverlayPlayer" style="width:100%; height:100%;"></div>
+      <video id="overlayHtmlVideo" style="position:absolute; inset:0; width:100%; height:100%; display:none; background:#000;" playsinline></video>
       <div id="videoNoContent" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; color:#e7c39a;">No video for this item</div>
       <button id="btnRestoreVideo" title="Restore window size" style="position:absolute; top:4px; left:50%; transform: translateX(-50%); display:none; z-index:5;">✖</button>
     </div>
@@ -355,7 +376,7 @@
     <!-- Top-right compact settings toolbar -->
     <div id="settingsToolbar" style="position:absolute; top:8px; right:12px; display:flex; gap:6px; align-items:center; z-index:1;">
       <button id="btnPurge" class="btn-sm" title="Clear saved settings">Purge</button>
-      <button id="btnExport" class="btn-sm" title="Export settings to JSON">Export JSON</button>
+      <button id="btnExport" type="button" class="btn-sm" title="Export settings to JSON">Export JSON</button>
       <label class="pill btn-sm" id="lblImport" title="Import settings from JSON" style="white-space:nowrap;">Import JSON
         <input id="importJson" type="file" accept="application/json" style="display:none;" />
       </label>
@@ -371,10 +392,13 @@
           </select>
           <div class="pill" id="captureStatus">Audio: idle</div>
           <div style="flex:1"></div>
-          <label class="pill" title="Grow plant stems overlay"><input id="togglePlants" type="checkbox" /> Plants</label>
+          <label class="pill" title="Show message overlay on screen in all modes"><input id="toggleOverlay" type="checkbox" /> Message</label>
+          <label class="pill" title="Grow plant stems overlay"><input id="togglePlants" type="checkbox" /> YStems</label>
           <button id="btnSearchYT" title="Search YouTube Music">Search Music</button>
           <button id="btnShowVideo" title="Show video overlay window">Show Video</button>
           <button id="btnCapture">Capture Audio</button>
+          <button id="btnReleaseAudio" title="Stop using captured audio and return to idle">Release Audio</button>
+          <button id="btnResetVis" title="Reset visualizer (non-destructive)">Reset Visualizer</button>
         </div>
         <!-- Livestream: Controls row (visible only in Livestream mode) -->
         <div class="row" id="liveControlsRow" style="display:none; margin-top:8px; gap:10px; align-items:center;">
@@ -418,6 +442,7 @@
           <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" style="width:140px" />
           <button id="btnShuffle" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
           <button id="btnRepeat" title="Repeat"><i class="fa-solid fa-rotate-right"></i></button>
+          <button id="btnRepeat1" title="Repeat current item only">Repeat 1</button>
         </div>
         <!-- Message Center: Live preview row (visible only in Message Center mode) -->
         <div class="row" id="msgPreviewRow" style="display:none; margin-top:8px;">
@@ -429,8 +454,13 @@
           <input id="addUrl" class="grow" type="text" placeholder="Paste YouTube URL (video or playlist)" />
           <button id="btnAdd">Add</button>
           <button id="btnAddFile">Add File</button>
-          <button id="btnReaddLocal" title="Re-add last local file" disabled>Re-add Last Local File</button>
-          <input id="fileInput" type="file" accept="audio/*,.m3u8" style="display:none;" />
+          <div id="playlistCounts" class="pill" title="Playlist counts" style="display:inline-flex; align-items:center; gap:8px;">
+            <span class="yt" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-brands fa-youtube"></i><span id="countYT">0</span></span>
+            <span class="aud" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-music"></i><span id="countAudio">0</span></span>
+            <span class="vid" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-film"></i><span id="countVideo">0</span></span>
+            <span class="all" style="display:inline-flex; align-items:center; gap:4px; opacity:0.9;"><i class="fa-solid fa-list"></i><span id="countAll">0</span></span>
+          </div>
+          <input id="fileInput" type="file" accept="audio/*,video/*,.m3u8" style="display:none;" />
         </div>
         <div id="playlist" class="list" aria-label="playlist"></div>
         <div class="row" style="margin-top:10px; gap:12px; align-items:center;">
@@ -452,11 +482,12 @@
             <option value="marqueeH">Marquee Horizontal</option>
             <option value="marqueeV">Marquee Vertical</option>
           </select>
-          <button id="btnEditMsg">Edit</button>
+          <button id="btnEditMsg" title="Save current text as a message">Save</button>
           <button id="btnClearMsg">Clear</button>
         </div>
         <div class="row" style="margin-top:8px;">
-          <input id="msgInput" class="grow" type="text" placeholder="Message text..." />
+          <textarea id="msgInput" class="grow" rows="2" placeholder="Message text... (Shift+Enter for new line)"></textarea>
+          <button id="btnNewLine" title="Insert line break">New Line</button>
           <input id="msgSize" type="number" min="12" max="128" value="38" title="size" />
           <input id="msgSpeed" type="number" min="10" max="240" value="60" title="speed (px/s)" />
           <label class="pill">Marquee Position
@@ -464,6 +495,13 @@
               <option value="bottom">Bottom</option>
               <option value="center">Center</option>
               <option value="top">Top</option>
+            </select>
+          </label>
+          <label class="pill">Align
+            <select id="msgAlign">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
             </select>
           </label>
         </div>
@@ -1692,26 +1730,29 @@
     const bands = { bass: 0, mid: 0, treble: 0 };
     async function startCapture() {
       try {
+        // Stop previous stream if any
+        try { if (sourceStream) sourceStream.getTracks?.().forEach(t => { try { t.stop(); } catch{} }); } catch {}
+        sourceStream = null; analyser = null; dataArray = null;
         // Try tab/system audio first
-        sourceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      } catch (e1) {
         try {
+          sourceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        } catch (e1) {
           // Fallback to mic
           sourceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (e2) {
-          console.warn('Audio capture denied');
-          setCaptureStatus('Audio: denied');
-          return;
         }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state !== 'running') { try { await audioCtx.resume(); } catch {} }
+        const source = audioCtx.createMediaStreamSource(sourceStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.85;
+        source.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        setCaptureStatus('Audio: capturing');
+      } catch (err) {
+        console.warn('Audio capture failed', err);
+        setCaptureStatus('Audio: denied');
       }
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioCtx.createMediaStreamSource(sourceStream);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.85;
-      source.connect(analyser);
-      dataArray = new Uint8Array(analyser.frequencyBinCount);
-      setCaptureStatus('Audio: capturing');
     }
     let playerCaptureStarted = false;
     async function ensurePlayerTabCapture() {
@@ -1720,6 +1761,7 @@
         // Ask for this-tab audio; many browsers require video:true for getDisplayMedia
         sourceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state !== 'running') { try { await audioCtx.resume(); } catch {} }
         const source = audioCtx.createMediaStreamSource(sourceStream);
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048;
@@ -1734,6 +1776,40 @@
       }
     }
     function setCaptureStatus(t) { document.getElementById('captureStatus').textContent = t; }
+    function releaseAudio(){
+      try {
+        if (sourceStream) {
+          const tracks = sourceStream.getTracks?.() || [];
+          tracks.forEach(tr => { try { tr.stop(); } catch{} });
+        }
+      } catch {}
+      sourceStream = null;
+      analyser = null; dataArray = null; playerCaptureStarted = false;
+      try { if (audioCtx && audioCtx.state === 'running') audioCtx.suspend(); } catch {}
+      // Reset strengths so visuals calm down
+      try { audioStrength = { bass:0, mid:0, treble:0 }; } catch {}
+      try { bands.bass = bands.mid = bands.treble = 0; } catch {}
+      try { prevTreble = 0; prevTrebleRaw = 0; } catch {}
+      try { if (typeof thunderEnergy !== 'undefined') thunderEnergy = 0; } catch {}
+      try { if (typeof strobeEnergy !== 'undefined') strobeEnergy = 0; } catch {}
+      // Restore defaults for some post effects if present
+      try { if (film && film.uniforms && film.uniforms['nIntensity']) film.uniforms['nIntensity'].value = 0.25; } catch {}
+      setCaptureStatus('Audio: idle');
+    }
+
+    function resetVisualizer(){
+      // Non-destructive reset of visual state (no page/media/window disruption)
+      try { audioStrength = { bass:0, mid:0, treble:0 }; } catch {}
+      try { bands.bass = bands.mid = bands.treble = 0; } catch {}
+      try { prevTreble = 0; prevTrebleRaw = 0; } catch {}
+      try { if (typeof thunderEnergy !== 'undefined') thunderEnergy = 0; } catch {}
+      try { if (typeof strobeEnergy !== 'undefined') strobeEnergy = 0; } catch {}
+      // Reset shader pass parameters to safe defaults if available
+      try { if (film && film.uniforms && film.uniforms['nIntensity']) film.uniforms['nIntensity'].value = 0.25; } catch {}
+      try { if (scan2Uniforms) { scan2Uniforms.uGlow.value = 1.5; scan2Uniforms.uThickness.value = 0.08; scan2Uniforms.uSubThickness.value = 0.03; } } catch {}
+      try { if (scanWrapUniforms) { scanWrapUniforms.glow.value = 1.4; scanWrapUniforms.thickness.value = 0.06; scanWrapUniforms.subThickness.value = 0.02; } } catch {}
+      try { if (scanHitUniforms) { scanHitUniforms.uGlow.value = 1.4; } } catch {}
+    }
 
     function updateBands() {
       if (!analyser || !dataArray) return;
@@ -1757,7 +1833,7 @@
     // Player and playlists (YouTube IFrame API)
     // -----------------------
     const LS_KEY = 'bronze_visual_settings_v1';
-    const state = { mode: 'player', playlist: [], shuffle: false, repeat: true, volume: 0.8, messages: [], msgMode: 'paragraph', plantsEnabled: false };
+    const state = { mode: 'player', playlist: [], shuffle: false, repeat: true, repeat1: false, volume: 0.8, messages: [], msgMode: 'paragraph', overlayEnabled: true, msgDraft: '', plantsEnabled: false };
     function getSavableState(){
       const toSave = JSON.parse(JSON.stringify(state));
       delete toSave.plantsEnabled; // always start plants OFF
@@ -1804,11 +1880,14 @@
     const importJson = document.getElementById('importJson');
     const btnSearchYT = document.getElementById('btnSearchYT');
     const btnShowVideo = document.getElementById('btnShowVideo');
+    const btnReleaseAudio = document.getElementById('btnReleaseAudio');
+    const btnResetVis = document.getElementById('btnResetVis');
     const ytSearchModal = document.getElementById('ytSearchModal');
     const btnCloseYtModal = document.getElementById('btnCloseYtModal');
     const btnRunYtSearch = document.getElementById('btnRunYtSearch');
     const ytQuery = document.getElementById('ytQuery');
     const ytResults = document.getElementById('ytResults');
+    const overlayHtmlVideo = document.getElementById('overlayHtmlVideo');
     const ytPreview = document.getElementById('ytPreview');
     const ytApiKeyInput = document.getElementById('ytApiKey');
     const btnSaveApiKey = document.getElementById('btnSaveApiKey');
@@ -1820,6 +1899,7 @@
     const volume = document.getElementById('volume');
     const btnShuffle = document.getElementById('btnShuffle');
     const btnRepeat = document.getElementById('btnRepeat');
+    const btnRepeat1 = document.getElementById('btnRepeat1');
     const addUrl = document.getElementById('addUrl');
     const btnAdd = document.getElementById('btnAdd');
     const playlistDiv = document.getElementById('playlist');
@@ -1842,10 +1922,12 @@
     const btnEditMsg = document.getElementById('btnEditMsg');
     const btnClearMsg = document.getElementById('btnClearMsg');
     const msgInput = document.getElementById('msgInput');
+    const btnNewLine = document.getElementById('btnNewLine');
     const msgSize = document.getElementById('msgSize');
     const msgSpeed = document.getElementById('msgSpeed');
     const msgLine = document.getElementById('msgLine');
     const msgPos = document.getElementById('msgPos');
+    const msgAlign = document.getElementById('msgAlign');
     const messagesList = document.getElementById('messagesList');
     const messagesSectionHome = document.getElementById('messagesSection').parentElement; // original home for entire messages section
     const paragraphEl = document.getElementById('msgParagraph');
@@ -1861,7 +1943,6 @@
     const videoOverlayPlayerHost = document.getElementById('videoOverlayPlayer');
     const videoNoContent = document.getElementById('videoNoContent');
     const btnRestoreVideo = document.getElementById('btnRestoreVideo');
-    const btnReaddLocal = document.getElementById('btnReaddLocal');
     let lastLocalFileName = '';
     // Slide-up panel grace period handling
     const dockZone = document.querySelector('.dock-zone');
@@ -1902,18 +1983,26 @@
     if (!state.msgOptions) state.msgOptions = { backdrop: true, band: true, stroke: true, glow: true, border: false, backdropOpacity: 0.9, backdropBlur: 8, borderWidth: 2, borderColor: '#ba7848', lineHeight: 1.2 };
     // Defaults for message settings
     if (!state.msgPos) state.msgPos = 'bottom';
+    if (!state.msgAlign) state.msgAlign = 'left';
     // Force Music Player as default mode on page load
     state.mode = 'player';
     // (Removed) Proxy settings: not used
     modeSelect.value = 'player';
     msgMode.value = state.msgMode;
+    if (msgAlign) msgAlign.value = state.msgAlign;
     // Plants toggle init
     const togglePlants = document.getElementById('togglePlants');
+    const toggleOverlay = document.getElementById('toggleOverlay');
     if (togglePlants) {
       // Always default OFF on page load and do not persist this setting
       state.plantsEnabled = false;
       togglePlants.checked = false;
       togglePlants.onchange = () => { state.plantsEnabled = togglePlants.checked; setPlantsEnabled(state.plantsEnabled); };
+    }
+    if (toggleOverlay) {
+      if (state.overlayEnabled == null) state.overlayEnabled = true;
+      toggleOverlay.checked = !!state.overlayEnabled;
+      toggleOverlay.onchange = () => { state.overlayEnabled = toggleOverlay.checked; saveState(); updateOverlay(); };
     }
     sensBass.value = String(state.sensBass);
     sensMid.value = String(state.sensMid);
@@ -1946,17 +2035,20 @@
     function updatePreview(){
       if (!msgPreviewBox) return;
       if (state.mode !== 'messages') return; // do not render preview outside Message Center
-      const txt = (state.messages[0]?.text || msgInput.value || '').trim();
+      // Use only current editor text; no fallback to saved messages
+      const txt = (msgInput.value || state.msgDraft || '').trim();
       const mode = msgMode.value;
       const size = parseInt(msgSize.value || '38', 10);
       const lineH = parseFloat(msgLine.value || '1.2');
+      const speed = parseFloat(msgSpeed.value || '60');
       msgPreviewBox.innerHTML = '';
       msgPreviewBox.style.overflow = 'hidden';
-      if (previewTimer) { clearInterval(previewTimer); previewTimer = 0; }
+      if (previewTimer) { cancelAnimationFrame(previewTimer); previewTimer = 0; }
       if (!txt) { msgPreviewBox.textContent = 'Type a message to preview…'; return; }
       if (mode === 'paragraph') {
         const s = document.createElement('div');
         s.textContent = txt;
+        s.style.whiteSpace = 'pre-line';
         s.style.fontSize = size + 'px';
         s.style.lineHeight = String(lineH);
         s.style.fontFamily = "Impact, Haettenschweiler, 'Arial Black', 'Segoe UI Black', sans-serif";
@@ -1964,21 +2056,75 @@
         s.style.webkitTextStroke = '1px rgba(0,0,0,0.65)';
         s.style.textShadow = '0 2px 2px rgba(0,0,0,0.75), 0 0 12px rgba(240,170,100,0.45), 0 0 24px rgba(240,170,100,0.25)';
         s.style.color = '#f1cda2';
+        // Allow preview to scroll when the paragraph is tall
+        s.style.maxHeight = '160px';
+        s.style.overflowY = 'auto';
+        s.classList.add('scrollbox');
+        const align = state.msgAlign || 'left';
+        s.style.textAlign = align;
         msgPreviewBox.appendChild(s);
-      } else {
+      } else if (mode === 'marqueeH') {
         const track = document.createElement('div');
-        track.textContent = txt;
         track.style.whiteSpace = 'nowrap';
-        track.style.fontSize = size + 'px';
-        track.style.fontFamily = "Impact, Haettenschweiler, 'Arial Black', 'Segoe UI Black', sans-serif";
-        track.style.textTransform = 'uppercase';
-        track.style.webkitTextStroke = '1px rgba(0,0,0,0.65)';
-        track.style.textShadow = '0 2px 2px rgba(0,0,0,0.75), 0 0 10px rgba(240,170,100,0.35), 0 0 22px rgba(240,170,100,0.22)';
-        track.style.color = '#f1cda2';
-        track.style.overflow = 'hidden';
-        track.style.textOverflow = 'clip';
-        // No animation in preview to better match a single marquee line snapshot
         msgPreviewBox.appendChild(track);
+        const lines = txt.split(/\n+/).filter(s => s.length);
+        const gapPx = Math.max(0, (lineH - 1.0) * size) + 24;
+        lines.forEach((line) => {
+          const sp = document.createElement('span');
+          sp.textContent = line;
+          sp.style.marginRight = gapPx + 'px';
+          sp.style.fontSize = size + 'px';
+          sp.style.fontFamily = "Impact, Haettenschweiler, 'Arial Black', 'Segoe UI Black', sans-serif";
+          sp.style.textTransform = 'uppercase';
+          sp.style.webkitTextStroke = '1px rgba(0,0,0,0.65)';
+          sp.style.textShadow = '0 2px 2px rgba(0,0,0,0.75), 0 0 10px rgba(240,170,100,0.35), 0 0 22px rgba(240,170,100,0.22)';
+          sp.style.color = '#f1cda2';
+          sp.style.textAlign = state.msgAlign || 'left';
+          track.appendChild(sp);
+        });
+        const start = performance.now();
+        const laneW = msgPreviewBox.getBoundingClientRect().width;
+        function tickH(ts){
+          const t = (ts - start) / 1000;
+          const w = track.getBoundingClientRect().width;
+          const period = laneW + w + 24;
+          const x = laneW - ((t * speed) % period);
+          track.style.transform = `translateX(${x}px)`;
+          previewTimer = requestAnimationFrame(tickH);
+        }
+        previewTimer = requestAnimationFrame(tickH);
+      } else if (mode === 'marqueeV') {
+        const track = document.createElement('div');
+        track.style.whiteSpace = 'normal';
+        track.style.display = 'block';
+        msgPreviewBox.appendChild(track);
+        const lines = txt.split(/\n+/).filter(s => s.length);
+        const gapPy = Math.max(0, (lineH - 1.0) * size) + 12;
+        lines.forEach((line) => {
+          const sp = document.createElement('span');
+          sp.textContent = line;
+          sp.style.display = 'block';
+          sp.style.textAlign = state.msgAlign || 'left';
+          sp.style.marginBottom = gapPy + 'px';
+          sp.style.fontSize = size + 'px';
+          sp.style.fontFamily = "Impact, Haettenschweiler, 'Arial Black', 'Segoe UI Black', sans-serif";
+          sp.style.textTransform = 'uppercase';
+          sp.style.webkitTextStroke = '1px rgba(0,0,0,0.65)';
+          sp.style.textShadow = '0 2px 2px rgba(0,0,0,0.75), 0 0 10px rgba(240,170,100,0.35), 0 0 22px rgba(240,170,100,0.22)';
+          sp.style.color = '#f1cda2';
+          track.appendChild(sp);
+        });
+        const start = performance.now();
+        function tickV(ts){
+          const t = (ts - start) / 1000;
+          const ch = msgPreviewBox.getBoundingClientRect().height;
+          const h = track.getBoundingClientRect().height;
+          const periodY = ch + h + 12;
+          const y = ch - ((t * speed) % periodY);
+          track.style.transform = `translateY(${y}px)`;
+          previewTimer = requestAnimationFrame(tickV);
+        }
+        previewTimer = requestAnimationFrame(tickV);
       }
     }
 
@@ -2045,6 +2191,7 @@
     // Playlist rendering
     function renderPlaylist() {
       playlistDiv.innerHTML = '';
+      updatePlaylistCounts();
       state.playlist.forEach((item, idx) => {
         const row = document.createElement('div'); row.className = 'row';
         const drag = document.createElement('span'); drag.textContent = '≡'; drag.className = 'handle pill';
@@ -2053,7 +2200,7 @@
           const badge = document.createElement('span'); badge.className = 'badge session'; badge.textContent = 'session-only'; name.appendChild(badge);
         }
         name.title = 'Play this item now';
-        name.onclick = () => { playItemAt(idx); };
+        name.onclick = () => { if (state.shuffle) resetPlayHistory(true); playItemAt(idx); };
         const del = document.createElement('button'); del.textContent = '✖'; del.onclick = () => { state.playlist.splice(idx,1); saveState(); renderPlaylist(); };
         row.appendChild(drag); row.appendChild(name); row.appendChild(del);
         // Drag and drop
@@ -2100,33 +2247,52 @@
     renderMessages();
 
     // ---------- Initial UI sync ----------
+    // restore current draft into the editor
+    if (typeof state.msgDraft === 'string') { msgInput.value = state.msgDraft; }
     updateMessageControlsVisibility();
     applyMarqueePosition();
     applyModeLayout();
+    // Apply message styling options (restores border, glow, stroke, etc.)
+    applyMsgOptions();
     updatePreview();
     updateOverlay();
 
     // Message overlay updates
     function updateOverlay() {
-      // Only show overlay when in Message Center mode
-      if (state.mode !== 'messages') { paragraphEl.style.opacity = 0; marquee.style.opacity = 0; return; }
+      // Global enable switch
+      if (!state.overlayEnabled) { paragraphEl.style.opacity = 0; marquee.style.opacity = 0; return; }
       const mode = msgMode.value;
-      const txt = (state.messages[0]?.text || msgInput.value || '').trim();
+      // Use only current editor text; no fallback to saved messages
+      const txt = (msgInput.value || state.msgDraft || '').trim();
       const size = parseInt(msgSize.value || '38', 10);
       const speed = parseInt(msgSpeed.value || '60', 10);
+      const align = state.msgAlign || 'left';
       if (!txt) {
-        paragraphEl.style.opacity = 0; marquee.style.opacity = 0; return;
+        // Fully hide and clear DOM state
+        paragraphEl.style.opacity = 0;
+        marquee.style.opacity = 0;
+        paragraphEl.textContent = '';
+        marqueeTrack.innerHTML = '';
+        marqueeTrack.style.transform = '';
+        marquee.style.height = '';
+        paragraphEl.style.display = 'none';
+        marquee.style.display = 'none';
+        return;
       }
+      // Ensure visible when we have text
+      paragraphEl.style.display = '';
+      marquee.style.display = '';
       if (mode === 'paragraph') {
         paragraphEl.textContent = txt; paragraphEl.style.opacity = 0.9; marquee.style.opacity = 0;
         paragraphEl.style.fontSize = size + 'px';
         paragraphEl.style.lineHeight = String(state.msgOptions.lineHeight ?? 1.2);
+        paragraphEl.style.textAlign = align;
       } else {
         paragraphEl.style.opacity = 0; marquee.style.opacity = 0.9;
         marqueeTrack.innerHTML = '';
-        // Default: no repeat for marquee; add a single span only
-        const span = document.createElement('span'); span.textContent = txt; marqueeTrack.appendChild(span);
         marqueeTrack.style.fontSize = size + 'px';
+        const lines = txt.split(/\n+/).filter(s => s.length);
+        const lineGapPx = Math.max(0, (parseFloat(state.msgOptions.lineHeight ?? 1.2) - 1.0) * size);
         const t = performance.now() / 1000;
 
         if (mode === 'marqueeH') {
@@ -2134,23 +2300,38 @@
           marqueeTrack.style.whiteSpace = 'nowrap';
           marqueeTrack.style.display = 'inline-block';
           marquee.style.height = (size * 1.6) + 'px';
+          // Build spans per line with horizontal gaps controlled by line spacing
+          lines.forEach((line, i) => {
+            const s = document.createElement('span');
+            s.textContent = line;
+            s.style.marginRight = (lineGapPx + 24) + 'px'; // base gap 24px plus line spacing
+            s.style.textAlign = align;
+            marqueeTrack.appendChild(s);
+          });
           const cw = marquee.getBoundingClientRect().width; // container width
-          const w = marqueeTrack.getBoundingClientRect().width; // content width
-          const gap = 24; // small breathing gap between loops
-          const period = cw + w + gap;
+          const w = marqueeTrack.getBoundingClientRect().width; // content width including gaps
+          const baseGap = 24; // breathing gap
+          const period = cw + w + baseGap;
           const x = cw - ((t * speed) % period);
           marqueeTrack.style.transform = `translateX(${x}px)`;
         } else if (mode === 'marqueeV') {
           // Vertical: start fully below (off-screen), move up, exit above, then repeat
           marqueeTrack.style.whiteSpace = 'normal';
           marqueeTrack.style.display = 'block';
-          span.style.display = 'block';
-          span.style.textAlign = 'center';
+          // Build one span per line stacked vertically with spacing; use span so CSS effects apply
+          lines.forEach((line) => {
+            const s = document.createElement('span');
+            s.textContent = line;
+            s.style.display = 'block';
+            s.style.textAlign = align;
+            s.style.marginBottom = (lineGapPx + 12) + 'px';
+            marqueeTrack.appendChild(s);
+          });
           // Give vertical marquee a taller lane
           const laneH = Math.max(size * 2.2, 64);
           marquee.style.height = laneH + 'px';
           const ch = marquee.getBoundingClientRect().height; // container height
-          const h = marqueeTrack.getBoundingClientRect().height; // content height
+          const h = marqueeTrack.getBoundingClientRect().height; // content height including gaps
           const gapY = 12;
           const periodY = ch + h + gapY;
           const y = ch - ((t * speed) % periodY);
@@ -2223,13 +2404,11 @@
             const P = YT.PlayerState;
             if (e.data === P.PLAYING) btnPlay.textContent = '⏸';
             else if (e.data === P.PAUSED || e.data === P.ENDED) btnPlay.textContent = '⏵';
-            if (e.data === P.ENDED && state.repeat) {
-              // Loop all
-              if (hasPlaylistId()) ytPlayer.playVideoAt(0);
-              else if (currentPlaylist.length) {
-                currentIndex = (currentIndex + 1) % currentPlaylist.length;
-                ytPlayer.loadVideoById(currentPlaylist[currentIndex]);
-              }
+            if (e.data === P.ENDED) {
+              // Repeat-1 overrides others: loop current video
+              if (state.repeat1) { try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch {} return; }
+              // Otherwise advance to next playlist item (works across types)
+              nextItem();
             }
           }
         }
@@ -2284,26 +2463,67 @@
       try { if (usingHls) { usingHls.destroy(); usingHls = null; } } catch {}
       try { audioEl.src = ''; } catch {}
     }
+    function stopOverlayVideoFile(){
+      try { overlayHtmlVideo.pause(); } catch {}
+      try { overlayHtmlVideo.removeAttribute('src'); overlayHtmlVideo.load?.(); } catch {}
+      try { overlayHtmlVideo.style.display = 'none'; } catch {}
+    }
     function stopYouTube() {
       try { ytPlayer && ytPlayer.stopVideo && ytPlayer.stopVideo(); } catch {}
     }
     function playItemAt(idx){
       currentIndex = idx;
       const item = state.playlist[idx]; if (!item) return;
+      markPlayed(idx);
       // Hard stop both engines first to avoid overlap
       stopHtmlAudio();
       stopYouTube();
+      stopOverlayVideoFile?.();
       if (item.type === 'audio') {
         ensureAudioAnalyser();
         loadAudio(item.url);
         audioEl.play(); btnPlay.textContent = '⏸';
+        // Repeat-1: if enabled, loop current audio item when it ends; otherwise preserve existing behavior
+        audioEl.onended = () => {
+          if (state.repeat1) { try { audioEl.currentTime = 0; audioEl.play(); } catch {} }
+          else { nextItem(); }
+        };
       } else if (item.type === 'playlist') {
         ytPlayer && ytPlayer.loadPlaylist({ listType:'playlist', list:item.id, index:0 }); btnPlay.textContent = '⏸';
       } else if (item.type === 'video') {
         ytPlayer && ytPlayer.loadVideoById(item.id); btnPlay.textContent = '⏸';
+      } else if (item.type === 'videoFile') {
+        // Local file video: show in overlayHtmlVideo inside the video window
+        showVideoWindow();
+        videoNoContent.style.display = 'none';
+        try { videoOverlayPlayerHost.style.display = 'none'; } catch {}
+        overlayHtmlVideo.style.display = '';
+        overlayHtmlVideo.src = item.url;
+        overlayHtmlVideo.currentTime = 0;
+        overlayHtmlVideo.play(); btnPlay.textContent = '⏸';
+        overlayHtmlVideo.onended = () => {
+          if (state.repeat1) { try { overlayHtmlVideo.currentTime = 0; overlayHtmlVideo.play(); } catch {} }
+          else { nextItem(); }
+        };
       }
     }
-    function nextItem(){ const n = state.playlist.length; if (!n) return; playItemAt((currentIndex+1)%n); }
+    function nextItem(){
+      const n = state.playlist.length; if (!n) return;
+      const ni = computeNextIndex();
+      if (ni === -1) {
+        // Stop playback cleanly
+        try { audioEl.pause(); } catch{}
+        try { ytPlayer && ytPlayer.pauseVideo && ytPlayer.pauseVideo(); } catch{}
+        try { overlayHtmlVideo.pause(); } catch{}
+        btnPlay.textContent = '⏵';
+        return;
+      }
+      if (ni === currentIndex && state.repeat1) {
+        // Loop current handled by specific handlers (audio/video/YT); nothing to do
+        return;
+      }
+      playItemAt(ni);
+    }
     function prevItem(){ const n = state.playlist.length; if (!n) return; playItemAt((currentIndex-1+n)%n); }
     function togglePlay(){
       const item = state.playlist[currentIndex]; if (!item) return;
@@ -2317,6 +2537,38 @@
     }
 
     function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+    // Track which indices have been played in current session (for Shuffle without Repeat)
+    let playedSet = new Set();
+    function resetPlayHistory(includeCurrent = true){
+      playedSet = new Set();
+      if (includeCurrent && currentIndex >= 0) playedSet.add(currentIndex);
+    }
+    function markPlayed(idx){ try { playedSet.add(idx); } catch{} }
+    function computeNextIndex(){
+      const n = state.playlist.length; if (!n) return -1;
+      // If repeating single item, stay on current
+      if (state.repeat1) return currentIndex;
+      if (state.shuffle) {
+        // Pick any unplayed index; if none, either stop or reset depending on Repeat
+        const remaining = [];
+        for (let i = 0; i < n; i++) { if (i !== currentIndex && !playedSet.has(i)) remaining.push(i); }
+        if (remaining.length > 0) {
+          const pick = remaining[Math.floor(Math.random()*remaining.length)];
+          return pick;
+        }
+        // All played
+        if (state.repeat) {
+          playedSet = new Set(); // reset history and pick a new random different from current if possible
+          const choices = Array.from({length:n}, (_,i)=>i).filter(i=>i!==currentIndex);
+          return choices.length ? choices[Math.floor(Math.random()*choices.length)] : currentIndex;
+        }
+        return -1; // stop
+      } else {
+        // Linear progression
+        if (currentIndex < n - 1) return currentIndex + 1;
+        return state.repeat ? 0 : -1;
+      }
+    }
 
     function startSeekSync(){
       if (seekTimer) return; // already
@@ -2324,6 +2576,8 @@
         const item = state.playlist[currentIndex];
         if (item && item.type === 'audio') {
           const d = audioEl.duration||0, t = audioEl.currentTime||0; if (d>0 && !draggingSeek) seek.value = String(Math.round((t/d)*100));
+        } else if (item && item.type === 'videoFile') {
+          const d = overlayHtmlVideo.duration||0, t = overlayHtmlVideo.currentTime||0; if (d>0 && !draggingSeek) seek.value = String(Math.round((t/d)*100));
         } else if (ytPlayer && typeof ytPlayer.getDuration === 'function') {
           const d = ytPlayer.getDuration() || 0; const t = ytPlayer.getCurrentTime() || 0; if (d>0 && !draggingSeek) seek.value = String(Math.round((t/d)*100));
         }
@@ -2472,11 +2726,30 @@
       if (item.type === 'audio') {
         videoNoContent.style.display = 'flex';
         try { overlayPlayer && overlayPlayer.stopVideo && overlayPlayer.stopVideo(); } catch {}
+        stopOverlayVideoFile();
         return;
       }
       videoNoContent.style.display = 'none';
+      if (item.type === 'videoFile') {
+        // Show local video element, hide YT iframe
+        try { document.getElementById('videoOverlayPlayer').style.display = 'none'; } catch {}
+        overlayHtmlVideo.style.display = '';
+        // Ensure src is current
+        if (overlayHtmlVideo.src !== item.url) { overlayHtmlVideo.src = item.url; }
+        // Keep playing if main media running
+        try {
+          const playing = !(overlayHtmlVideo.paused || overlayHtmlVideo.ended);
+          const frac = parseInt(seek.value||'0',10)/100; const d = overlayHtmlVideo.duration||0; if (d>0) {
+            const target = d*frac; if (Math.abs((overlayHtmlVideo.currentTime||0) - target) > 1.0) overlayHtmlVideo.currentTime = target;
+          }
+          if (!playing && btnPlay.textContent === '⏸') overlayHtmlVideo.play();
+        } catch {}
+        return;
+      }
       ensureOverlayPlayer(); if (!overlayPlayer) return;
       try { overlayPlayer.mute(); } catch {}
+      try { document.getElementById('videoOverlayPlayer').style.display = ''; } catch {}
+      overlayHtmlVideo.style.display = 'none';
       if (ytPlayer && typeof ytPlayer.getVideoData === 'function') {
         const data = ytPlayer.getVideoData(); const vid = data && data.video_id;
         const t = (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime()) || 0;
@@ -2761,6 +3034,22 @@
         window.addEventListener('mousemove', mm); window.addEventListener('mouseup', mu);
       });
     }
+    function updatePlaylistCounts(){
+      try {
+        const all = state.playlist.length;
+        const yt  = state.playlist.filter(it => it && (it.type === 'video' || it.type === 'playlist')).length;
+        const aud = state.playlist.filter(it => it && it.type === 'audio' && !!it.local).length;
+        const vid = state.playlist.filter(it => it && it.type === 'videoFile' && !!it.local).length;
+        const elYT = document.getElementById('countYT');
+        const elA  = document.getElementById('countAudio');
+        const elV  = document.getElementById('countVideo');
+        const elAll= document.getElementById('countAll');
+        if (elYT) elYT.textContent = String(yt);
+        if (elA)  elA.textContent  = String(aud);
+        if (elV)  elV.textContent  = String(vid);
+        if (elAll)elAll.textContent= String(all);
+      } catch {}
+    }
     function attachChrome(win){
       // auto-hide chrome
       let timer = 0; const schedule = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => win.root.classList.add('chrome-hidden'), 3000); };
@@ -3005,6 +3294,8 @@
 
     // Controls wiring
     btnCapture.onclick = () => { startCapture(); };
+    if (btnReleaseAudio) btnReleaseAudio.onclick = () => { releaseAudio(); };
+    if (btnResetVis) btnResetVis.onclick = () => { resetVisualizer(); };
     btnPurge.onclick = () => { localStorage.removeItem(LS_KEY); location.reload(); };
     // --- YouTube Music Search Modal ---
     function openYtModal(){ ytSearchModal.classList.add('show'); }
@@ -3173,15 +3464,36 @@
         if (liveControlsRow) liveControlsRow.style.display = '';
       }
     }
-    modeSelect.onchange = () => { state.mode = modeSelect.value; saveState(); applyModeLayout(); };
+    modeSelect.onchange = () => { state.mode = modeSelect.value; saveState(); applyModeLayout(); updatePreview(); updateOverlay(); };
     msgMode.onchange = () => { state.msgMode = msgMode.value; saveState(); updateMessageControlsVisibility(); updatePreview(); updateOverlay(); };
     btnEditMsg.onclick = () => { if (msgInput.value) { state.messages.unshift({ text: msgInput.value }); saveState(); renderMessages(); } };
-    btnClearMsg.onclick = () => { msgInput.value=''; saveState(); updatePreview(); updateOverlay(); };
-    msgInput.oninput = () => { updatePreview(); updateOverlay(); };
+    btnClearMsg.onclick = () => { msgInput.value=''; state.msgDraft = ''; saveState(); updatePreview(); updateOverlay(); };
+    msgInput.oninput = () => { state.msgDraft = msgInput.value; saveState(); updatePreview(); updateOverlay(); };
+    if (btnNewLine) btnNewLine.onclick = () => {
+      const el = msgInput; const start = el.selectionStart ?? el.value.length; const end = el.selectionEnd ?? start;
+      el.value = el.value.slice(0, start) + "\n" + el.value.slice(end);
+      el.selectionStart = el.selectionEnd = start + 1; el.focus(); updatePreview(); updateOverlay();
+    };
+    msgInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        const el = msgInput; const start = el.selectionStart ?? el.value.length; const end = el.selectionEnd ?? start;
+        el.value = el.value.slice(0, start) + "\n" + el.value.slice(end);
+        el.selectionStart = el.selectionEnd = start + 1; updatePreview(); updateOverlay();
+      }
+    });
     msgSize.onchange = () => { updatePreview(); updateOverlay(); };
-    msgLine.oninput = () => { updatePreview(); updateOverlay(); };
+    msgLine.oninput = () => {
+      // Persist and apply to overlay CSS, then refresh preview and overlay renderers
+      state.msgOptions.lineHeight = parseFloat(msgLine.value);
+      saveState();
+      applyMsgOptions();
+      updatePreview();
+      updateOverlay();
+    };
     msgSpeed.onchange = () => { updatePreview(); };
     msgPos.onchange = () => { state.msgPos = msgPos.value; saveState(); applyMarqueePosition(); updatePreview(); };
+    if (msgAlign) msgAlign.onchange = () => { state.msgAlign = msgAlign.value; saveState(); updatePreview(); updateOverlay(); };
     btnAdd.onclick = async () => {
       const text = addUrl.value.trim(); if (!text) return;
       const p = classifyUrl(text);
@@ -3196,36 +3508,33 @@
     document.getElementById('fileInput').addEventListener('change', (e) => {
       const f = e.target.files?.[0]; if (!f) return;
       const url = URL.createObjectURL(f);
-      lastLocalFileName = f.name; btnReaddLocal.disabled = false;
-      state.playlist.push({ type:'audio', url, name: f.name, local:true });
+      lastLocalFileName = f.name; { const b = document.getElementById('btnReaddLocal'); if (b) b.disabled = false; }
+      const isVideo = (f.type||'').startsWith('video/');
+      state.playlist.push({ type: isVideo ? 'videoFile' : 'audio', url, name: f.name, local:true });
       saveState(); renderPlaylist();
     });
-    // Re-add last local file: opens picker; on choose, replace previous local entry if any
-    btnReaddLocal.onclick = () => {
-      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*,.m3u8'; inp.style.display='none';
-      document.body.appendChild(inp);
-      inp.onchange = (e) => {
-        const f = inp.files?.[0]; if (!f) { document.body.removeChild(inp); return; }
-        const url = URL.createObjectURL(f);
-        // Replace first local item if exists, else push
-        const i = state.playlist.findIndex(it => it.local);
-        const entry = { type:'audio', url, name: f.name || lastLocalFileName || 'Local File', local:true };
-        if (i >= 0) state.playlist[i] = entry; else state.playlist.push(entry);
-        lastLocalFileName = f.name; btnReaddLocal.disabled = false;
-        saveState(); renderPlaylist(); playItemAt(i>=0? i : state.playlist.length-1);
-        document.body.removeChild(inp);
-      };
-      inp.click();
-    };
+    // Re-add feature removed by user request; leave no-op guards to avoid errors if legacy state exists
     function updatePlayerButtonsUI(){
+      // Active state visuals
       btnShuffle.classList.toggle('active', !!state.shuffle);
       btnRepeat.classList.toggle('active',  !!state.repeat);
-      btnShuffle.style.opacity = state.shuffle ? 1 : 0.9;
-      btnRepeat.style.opacity  = state.repeat  ? 1 : 0.9;
+      btnRepeat1.classList.toggle('active', !!state.repeat1);
+      // Base opacity for readability even when off
+      btnShuffle.style.opacity = state.shuffle ? 1 : 0.8;
+      btnRepeat.style.opacity  = state.repeat  ? 1 : 0.8;
+      // Repeat1 overrides the other two
+      const overridden = !!state.repeat1;
+      btnShuffle.disabled = overridden; btnRepeat.disabled = overridden;
+      btnShuffle.classList.toggle('overridden', overridden);
+      btnRepeat.classList.toggle('overridden', overridden);
+      // Titles for clarity
+      btnRepeat1.title = overridden ? 'Repeat current (overrides Shuffle/Repeat)' : 'Repeat current item only';
+      btnShuffle.title = overridden ? 'Disabled by Repeat 1' : 'Shuffle';
+      btnRepeat.title  = overridden ? 'Disabled by Repeat 1' : 'Repeat';
     }
     volume.oninput = () => { state.volume = parseFloat(volume.value); saveState(); try{ ytPlayer && ytPlayer.setVolume(Math.round(state.volume * 100)); }catch{} };
-    btnShuffle.onclick = () => { state.shuffle = !state.shuffle; saveState(); updatePlayerButtonsUI(); if (ytPlayer) loadIntoPlayer(); };
-    btnRepeat.onclick  = () => { state.repeat  = !state.repeat;  saveState(); updatePlayerButtonsUI(); try{ ytPlayer && ytPlayer.setLoop(state.repeat); }catch{} };
+    btnShuffle.onclick = () => { if (state.repeat1) return; state.shuffle = !state.shuffle; resetPlayHistory(true); saveState(); updatePlayerButtonsUI(); if (ytPlayer) loadIntoPlayer(); };
+    btnRepeat.onclick  = () => { if (state.repeat1) return; state.repeat  = !state.repeat;  saveState(); updatePlayerButtonsUI(); try{ ytPlayer && ytPlayer.setLoop(state.repeat); }catch{} };
     sensBass.oninput = () => { state.sensBass = parseFloat(sensBass.value); saveState(); };
     sensMid.oninput = () => { state.sensMid = parseFloat(sensMid.value); saveState(); };
     sensTreble.oninput = () => { state.sensTreble = parseFloat(sensTreble.value); saveState(); };
@@ -3241,14 +3550,36 @@
     };
     btnPrev.onclick = () => { prevItem(); };
     btnNext.onclick = () => { nextItem(); };
-    seek.oninput = () => { draggingSeek = true; };
-    seek.onchange = () => {
-      draggingSeek = false; const v = parseInt(seek.value||'0',10)/100; const item = state.playlist[currentIndex]; if (!item) return;
-      if (item.type === 'audio') { const d = audioEl.duration||0, t = audioEl.currentTime||0; if (d>0 && !draggingSeek) seek.value = String(Math.round((t/d)*100)); }
-      else if (ytPlayer) { const d = ytPlayer.getDuration() || 0; const t = ytPlayer.getCurrentTime() || 0; if (d>0 && !draggingSeek) seek.value = String(Math.round((t/d)*100)); }
+    function seekToFraction(f){
+      const item = state.playlist[currentIndex]; if (!item) return;
+      const frac = Math.min(1, Math.max(0, isFinite(f) ? f : 0));
+      if (item.type === 'audio') {
+        const d = audioEl.duration||0; if (d>0) { audioEl.currentTime = d * frac; }
+      } else if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+        if (item.type === 'video') {
+          const d = (ytPlayer.getDuration && ytPlayer.getDuration()) || 0;
+          const t = d>0 ? d * frac : (((ytPlayer.getCurrentTime && ytPlayer.getCurrentTime()) || 0));
+          ytPlayer.seekTo(t, true);
+        }
+      } else if (item.type === 'videoFile') {
+        const d = overlayHtmlVideo.duration||0; if (d>0) overlayHtmlVideo.currentTime = d * frac;
+      }
+      // Immediately sync overlay video window if open
+      try { syncOverlayNow(); } catch {}
+    }
+    seek.oninput = () => {
+      draggingSeek = true;
+      const v = parseInt(seek.value||'0',10)/100; seekToFraction(v);
     };
-    btnShuffle.onclick = () => { state.shuffle = !state.shuffle; saveState(); updatePlayerButtonsUI(); };
-    btnRepeat.onclick  = () => { state.repeat  = !state.repeat;  saveState(); updatePlayerButtonsUI(); };
+    seek.onchange = () => {
+      draggingSeek = false;
+      const v = parseInt(seek.value||'0',10)/100; seekToFraction(v);
+    };
+    btnShuffle.onclick = () => { if (state.repeat1) return; state.shuffle = !state.shuffle; saveState(); updatePlayerButtonsUI(); };
+    btnRepeat.onclick  = () => { if (state.repeat1) return; state.repeat  = !state.repeat;  saveState(); updatePlayerButtonsUI(); };
+    if (btnRepeat1) {
+      btnRepeat1.onclick = () => { state.repeat1 = !state.repeat1; resetPlayHistory(true); saveState(); updatePlayerButtonsUI(); };
+    }
 
     // -----------------------
     // Audio reactive mapping
@@ -3432,21 +3763,28 @@
     // We cannot override the already running loop, so hook via rAF tasks
     let __uiLast = performance.now();
     ;(function uiLoop(){
-      const now = performance.now();
-      const dt = Math.max(0, (now - __uiLast) / 1000);
-      __uiLast = now;
-      // Update analyser bands
-      if (analyser) updateBands();
-      applyAudioToScene();
-      // Drive scan phase speed. With Thunder on, vary strongly with bass; otherwise mild.
-      const sB = (state.sensBass ?? 1);
-      const gBapprox = audioStrength.bass * (sB * sB);
-      const speedFactor = state.sensThunder ? (0.3 + gBapprox * 3.0) : (1.0 + gBapprox * 0.8);
-      if (scan2Uniforms) scan2Uniforms.uTime.value += dt * speedFactor;
-      if (scanWrapUniforms) scanWrapUniforms.time.value += dt * speedFactor;
-      updateOverlay();
-      updatePlants(dt);
-      requestAnimationFrame(uiLoop);
+      let now, dt;
+      try {
+        now = performance.now();
+        dt = Math.max(0, (now - __uiLast) / 1000);
+        __uiLast = now;
+        // Update analyser bands
+        try { if (analyser) updateBands(); } catch (e) { console.error('updateBands error', e); }
+        // Audio-reactive scene updates (guarded)
+        try { applyAudioToScene(); } catch (e) { console.error('applyAudioToScene error', e); }
+        // Drive scan phase speed. With Thunder on, vary strongly with bass; otherwise mild.
+        const sB = (state.sensBass ?? 1);
+        const gBapprox = audioStrength.bass * (sB * sB);
+        const speedFactor = state.sensThunder ? (0.3 + gBapprox * 3.0) : (1.0 + gBapprox * 0.8);
+        try { if (scan2Uniforms) scan2Uniforms.uTime.value += dt * speedFactor; } catch {}
+        try { if (scanWrapUniforms) scanWrapUniforms.time.value += dt * speedFactor; } catch {}
+        try { updateOverlay(); } catch (e) { console.error('updateOverlay error', e); }
+        try { updatePlants(dt); } catch (e) { console.error('updatePlants error', e); }
+      } catch (err) {
+        console.error('uiLoop fatal error', err);
+      } finally {
+        requestAnimationFrame(uiLoop);
+      }
     })();
 
     // =======================

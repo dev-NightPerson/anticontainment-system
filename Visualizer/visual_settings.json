@@ -1,0 +1,91 @@
+{
+  "mode": "player",
+  "playlist": [
+    {
+      "type": "video",
+      "id": "oilVq8-F4_Q"
+    },
+    {
+      "type": "video",
+      "id": "_2qsU8FGU_E",
+      "title": "Parcels - Tieduprightnow (Official Music Video)"
+    },
+    {
+      "type": "video",
+      "id": "8rwHwAdw0eU",
+      "title": "NINETENTWO - Knight"
+    }
+  ],
+  "shuffle": false,
+  "repeat": false,
+  "repeat1": false,
+  "volume": 0.8,
+  "messages": [
+    {
+      "text": "I\nLOVE\nTHIS\nAPP"
+    },
+    {
+      "text": "what is \nup\nI am having fun"
+    },
+    {
+      "text": "hi there"
+    },
+    {
+      "text": "hi there\nwhat is up?"
+    },
+    {
+      "text": "hi there"
+    },
+    {
+      "text": "hi"
+    },
+    {
+      "text": "hi"
+    },
+    {
+      "text": "I h\nLOVE\nTHIS\nAPP"
+    },
+    {
+      "text": "I h\nLOVE\nTHIS\nAPP"
+    },
+    {
+      "text": "I\nLOVE\nTHIS\nAPP"
+    },
+    {
+      "text": "I\nLOVE\nTHIS\nAPP"
+    },
+    {
+      "text": "I\nLOVE\nTHIS\nAPP"
+    },
+    {
+      "text": "I\nLOVE\nTHIS\nAPP"
+    }
+  ],
+  "msgMode": "marqueeH",
+  "overlayEnabled": true,
+  "msgDraft": "NINETENTWO ANTICONTAINMENT SYSTEM",
+  "autoPlay": true,
+  "playIndex": 0,
+  "stemsOn": true,
+  "sensBass": 0,
+  "sensMid": 2,
+  "sensTreble": 0,
+  "sensPunchy": false,
+  "sensThunder": false,
+  "sensThunderIntensity": 1.2,
+  "msgOptions": {
+    "backdrop": true,
+    "band": true,
+    "stroke": true,
+    "glow": true,
+    "border": true,
+    "backdropOpacity": 0.9,
+    "backdropBlur": 8,
+    "borderWidth": 8,
+    "borderColor": "#ba7848",
+    "lineHeight": 0.8
+  },
+  "msgPos": "center",
+  "sproutsOn": true,
+  "msgAlign": "center"
+}
