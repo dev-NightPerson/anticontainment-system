@@ -418,11 +418,11 @@
           <div style="flex:1"></div>
           <label class="pill" title="Show message overlay on screen in all modes"><input id="toggleOverlay" type="checkbox" /> Message</label>
           <label class="pill" title="Grow plant stems overlay"><input id="togglePlants" type="checkbox" /> YStems</label>
-          <button id="btnSearchYT" title="Search YouTube Music">Search Music</button>
-          <button id="btnShowVideo" title="Show video overlay window">Show Video</button>
-          <button id="btnCapture">Capture Audio</button>
-          <button id="btnReleaseAudio" title="Stop using captured audio and return to idle">Release Audio</button>
-          <button id="btnResetVis" title="Reset visualizer (non-destructive)">Reset Visualizer</button>
+          <button id="btnSearchYT" class="btn-sm" title="Search YouTube Music">Search Music</button>
+          <button id="btnShowVideo" class="btn-sm" title="Show video overlay window">Show Video</button>
+          <button id="btnCapture" class="btn-sm">Capture Audio</button>
+          <button id="btnReleaseAudio" class="btn-sm" title="Stop using captured audio and return to idle">Release Audio</button>
+          <button id="btnResetVis" class="btn-sm" title="Reset visualizer (non-destructive)">Reset Visualizer</button>
         </div>
         <!-- Livestream: Controls row (visible only in Livestream mode) -->
         <div class="row" id="liveControlsRow" style="display:none; margin-top:8px; gap:10px; align-items:center;">
@@ -2024,6 +2024,19 @@
         devOverlayOpacity?.addEventListener('input', () => { DevState.overlayOpacity = parseFloat(devOverlayOpacity.value||'0.5'); applyDevEffects(); });
         devSpeedMul?.addEventListener('change', () => { DevState.speedMul = Math.max(0, parseFloat(devSpeedMul.value||'1')||1); patchThreeClockSpeed(); });
         devTint?.addEventListener('change', () => { DevState.tint = devTint.value; applyDevEffects(); });
+        // Internet helpers init and toggle
+        try {
+          const isLocalHost = ['localhost','127.0.0.1','::1'].includes(location.hostname) || location.hostname.endsWith('.local') || location.protocol === 'file:';
+          window.__CAPTURE_HELPERS = window.__CAPTURE_HELPERS || { enabled: !isLocalHost, forceOn: !isLocalHost, warningShown:false };
+          const sec = document.getElementById('internetHelpersSection');
+          const chk = document.getElementById('devEnableInternetHelpers');
+          if (chk) {
+            chk.checked = !!window.__CAPTURE_HELPERS.enabled;
+            chk.disabled = !!window.__CAPTURE_HELPERS.forceOn; // force on when hosted on internet
+            chk.addEventListener('change', () => { if (!window.__CAPTURE_HELPERS.forceOn) window.__CAPTURE_HELPERS.enabled = !!chk.checked; });
+          }
+          if (sec) sec.style.display = '';
+        } catch {}
         // Wrap Scan tuning controls (do not persist)
         try {
           const gw = document.getElementById('devGwMul');
@@ -2093,8 +2106,10 @@
         try {
           sourceStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         } catch (e1) {
-          // Fallback to mic
-          sourceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Fallback to mic with music-friendly constraints (no voice DSP)
+          sourceStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+          });
         }
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state !== 'running') { try { await audioCtx.resume(); } catch {} }
@@ -2186,6 +2201,12 @@
       // Define frequency ranges roughly: bass < 200Hz, mid 200-2000Hz, treble > 2kHz
       const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
       const nyquist = sampleRate / 2;
+      // Compute overall level for meter and helper decisions
+      let sum = 0; for (let i=0;i<n;i++) sum += dataArray[i];
+      const overall = sum / (n * 255); // 0..1
+      window.__CAPTURE_LEVEL = overall;
+      // Update level meter UI
+      try { const f = document.getElementById('devLevelFill'); if (f) f.style.width = Math.round(overall * 100) + '%'; } catch {}
       function binFor(freq) { return Math.min(n - 1, Math.max(0, Math.floor(freq / nyquist * n))); }
       const b0 = 0, b1 = binFor(200), m1 = binFor(2000);
       let sb = 0, sm = 0, st = 0, cb = 0, cm = 0, ct = 0;
@@ -3973,9 +3994,20 @@
       const baseM = 2.0 * audioStrength.mid * (sM * sM); // doubled mid sensitivity
       const baseT = audioStrength.treble * Math.pow(sT, 1.5);
       const punch = state.sensPunchy ? 1.8 : 1.0; // extra punch across all bands
-      const gB = baseB * punch;
-      const gM = baseM * punch;
-      const gT = baseT * punch;
+      let gB = baseB * punch;
+      let gM = baseM * punch;
+      let gT = baseT * punch;
+      // Minimal adaptive gain for very low levels when helpers are enabled
+      try {
+        const H = window.__CAPTURE_HELPERS || { enabled:false };
+        const lvl = window.__CAPTURE_LEVEL || 0;
+        if (H.enabled) {
+          const low = 0.02, high = 0.08; // soften near-silence
+          const k = THREE.MathUtils.clamp((high - Math.min(high, lvl)) / (high - low), 0.0, 1.0);
+          const gain = 1.0 + k * 1.8; // up to ~2.8x boost when very low
+          gB *= gain; gM *= gain; gT *= gain;
+        }
+      } catch {}
 
       // Bass: fog density and scan-line brightness/thickness
       scene.fog.density = THREE.MathUtils.clamp(0.008 + gB * 0.12, 0.005, 0.16);
@@ -4014,6 +4046,25 @@
           scanWrapUniforms.opacity.value *= gate;
         }
       }
+      // Tab-audio presence warning when helpers enabled: show if no audio tracks or very low level for a while
+      try {
+        const H = window.__CAPTURE_HELPERS || { enabled:false, warningShown:false };
+        if (H.enabled && !H.warningShown) {
+          const tracks = (window.sourceStream && window.sourceStream.getAudioTracks && window.sourceStream.getAudioTracks()) || [];
+          const hasAudioTrack = tracks.length > 0;
+          const lvl = window.__CAPTURE_LEVEL || 0;
+          if (!hasAudioTrack || lvl < 0.01) {
+            // Show warning only after sustained low level to avoid flicker
+            window.__CAP_WARN_ACC = (window.__CAP_WARN_ACC||0) + 1;
+            if (window.__CAP_WARN_ACC > 120) { // ~2s at 60fps
+              const w = document.getElementById('devCaptureWarn'); if (w) w.style.display = 'block';
+              H.warningShown = true;
+            }
+          } else {
+            window.__CAP_WARN_ACC = 0; // reset accumulator
+          }
+        }
+      } catch {}
       // Cube hit glow reacts to bass as well
       scanHitUniforms.uGlow.value = 1.4 + gB * 6.0;
 
@@ -4411,6 +4462,14 @@
       <button id="btnDevClose" class="btn-sm" title="Close">✖</button>
     </div>
     <div class="body">
+        <!-- Level meter (always visible at top of modal) -->
+        <div id="devLevelMeter" class="section" style="display:block; padding:6px;">
+          <div class="pill" style="margin-bottom:6px;">Capture Level</div>
+          <div id="devLevelBar" style="position:relative; height:8px; background: rgba(255,200,150,0.12); border:1px solid rgba(255,200,150,0.2); border-radius:6px; overflow:hidden;">
+            <div id="devLevelFill" style="position:absolute; left:0; top:0; bottom:0; width:0%; background: linear-gradient(90deg, rgba(140,95,60,0.7), rgba(200,150,100,0.9)); box-shadow: 0 0 8px rgba(255,200,150,0.35);
+            "></div>
+          </div>
+        </div>
         <div class="section">
           <div class="pill" style="margin-bottom:6px;">Toggle Parts</div>
         <label><input type="checkbox" id="devShowScanner" checked /> Scan Line /Plane</label>
@@ -4459,6 +4518,22 @@
             <input type="range" id="devNoiseMul" min="0" max="2" step="0.01" value="1" />
             <input type="checkbox" id="devNoiseBoost" /> Boost
           </label>
+        </div>
+        <div class="section" id="internetHelpersSection">
+          <div class="pill" style="margin-bottom:6px;">Internet Capture Helpers</div>
+          <div class="note" style="opacity:0.8; font-size:12px; margin-bottom:6px;">
+            These enhance audio capture on hosted sites: better mic fallback, tab-audio warning, and adaptive gain at very low levels.
+          </div>
+          <label title="Enable these helpers (auto-on when hosted on the internet)">
+            <input type="checkbox" id="devEnableInternetHelpers" /> Activate Internet Settings
+          </label>
+          <div id="devCaptureWarn" class="note" style="display:none; margin-top:6px; padding:6px; border:1px solid rgba(255,200,150,0.25); border-radius:6px; background: rgba(40,28,20,0.8); color:#f0cfa5;">
+            Low or no audio detected. Re-capture and pick a source that includes audio:
+            <ul style="margin:6px 0 0 18px; padding:0;">
+              <li>Entire screen (enable <b>Share system/tab audio</b>), or</li>
+              <li>A browser tab that is playing audio</li>
+            </ul>
+          </div>
         </div>
         <div style="display:flex; gap:6px; justify-content:flex-end;">
           <button id="devApply" class="btn-sm">Apply</button>
