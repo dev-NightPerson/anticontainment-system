@@ -1661,6 +1661,64 @@ window.addEventListener('DOMContentLoaded', () => {
     refreshGrid();
     initSearch();
     
+    // Handle extension add flow via URL params
+    (function processAddFromQuery(){
+      try {
+        const sp = new URLSearchParams(location.search);
+        if (sp.get('add') !== '1') return;
+        const url = sp.get('url') || '';
+        const title = sp.get('title') || '';
+        const category = sp.get('category') || '';
+        const newCategory = sp.get('newCategory') || '';
+        if (!url) return;
+
+        // Resolve or create target group
+        let targetGroupId = null;
+        const nameEq = (a,b) => (a||'').toLowerCase() === (b||'').toLowerCase();
+        if (newCategory) {
+          // Create a new group id from name
+          const baseId = newCategory.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'');
+          let gid = baseId || 'group-' + Math.random().toString(36).slice(2,7);
+          // avoid collisions
+          const existingIds = new Set(groups.map(g=>g.id));
+          let n = 2; while (existingIds.has(gid)) { gid = baseId + '-' + (n++); }
+          groups.push({ id: gid, name: newCategory.trim(), sites: [] });
+          targetGroupId = gid;
+          saveGroups();
+        } else if (category) {
+          const byId = groups.find(g => g.id === category);
+          const byName = groups.find(g => nameEq(g.name, category));
+          if (byId) targetGroupId = byId.id; else if (byName) targetGroupId = byName.id;
+        }
+        if (!targetGroupId && groups[0]) targetGroupId = groups[0].id;
+
+        // Add site if not present
+        const exists = sites.some(s => s.url === url);
+        if (!exists) {
+          sites.push({ url, title: title || url });
+          saveSites(sites);
+        }
+        // Ensure site is in the target group
+        if (targetGroupId) {
+          const g = groups.find(x => x.id === targetGroupId);
+          if (g && !g.sites.includes(url)) {
+            g.sites.push(url);
+            saveGroups();
+          }
+        }
+        // Rebuild UI and scroll to target group
+        refreshGrid({ skipMetadata: true });
+        setTimeout(() => {
+          refreshGrid();
+          if (targetGroupId) scrollToGroup(targetGroupId);
+        }, 0);
+        // Clean query to avoid re-adding on refresh
+        try { history.replaceState({}, document.title, location.pathname); } catch {}
+      } catch (e) {
+        console.error('Error processing add-from-query:', e);
+      }
+    })();
+
     // Add settings button click handler
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settingsModal');
